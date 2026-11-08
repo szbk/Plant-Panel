@@ -1,0 +1,588 @@
+# =====================================================================
+#  Toprak Nem Sensörü — LilyGO T-Energy S3 (ESP32-S3, 1x18650)
+#  Capacitive Soil Moisture Sensor v2.0 (TL555C, R4 düzeltmeli)
+#
+#  Döngü: uyan -> pil kontrol -> WiFi (~0.4 sn) -> MQTT -> ölç -> gönder -> uyu
+#
+#  Bağlantılar:  Sensör GND -> G | AOUT -> IO1 | VCC -> IO2
+#                Pil voltajı: IO3 (kartın kendi bölücüsü)
+#
+#  AYAR MODU (cihaz içi web arayüzü, 10 dk, etkileşimde uzar):
+#    A) BOOT tuşuna bas -> kart uyanır, ayar modunda açılır
+#    B) 3 uyanış üst üste WiFi'a bağlanamazsa "Toprak-Sensoru-Kurulum" ağını açar
+#    C) MQTT'de toprak-sensoru/ota_mode (ya da ayar_modu) konusuna retain'li "ON"
+#  Arayüz: http://<cihaz-ip>/  (kurulum ağında http://192.168.4.1/)
+#  Ayarlar (WiFi, MQTT, uyku, kalibrasyon) kalıcı bellekte: ayar.h
+#  OTA: esphome upload ... --device IP  ya da arayüzden .bin yükle
+# =====================================================================
+
+substitutions:
+  # --- Ağınıza göre doldurun (bkz. README "Firmware setup") ---
+  # Sensör bu erişim noktasına (BSSID + kanal) sabit bağlanır: tarama yapmadığı için uyanış ~0.5 sn sürer.
+  # BSSID'yi bulmak için: ayar arayüzündeki "Ağları tara" ya da telefonda bir WiFi analiz uygulaması.
+  wifi_bssid: "AA:BB:CC:DD:EE:FF"
+  wifi_channel: "6"
+  # Sabit IP: router'ın DHCP havuzunun DIŞINDA bir adres seçin (çakışma bağlantı kopmalarına yol açar).
+  static_ip: 192.168.1.50
+  gateway: 192.168.1.1
+  subnet: 255.255.255.0
+  dns: 192.168.1.1
+  # --- Davranış ---
+  uyku_suresi: 30min       # ölçüm aralığı
+  veri_omru: 75min         # bu süre veri gelmezse HA 'kullanılamaz' gösterir
+  pil_kesim: "3.40"        # bu voltajın altında WiFi açılmaz
+  hizli_uyku_ms: "300000"   # hizli_uyku ile aynı (ms)
+  hizli_uyku: 5min         # gönderim başarısız olursa bu kadar sonra tekrar dene
+  hizli_deneme_max: "2"    # art arda en çok bu kadar hızlı deneme, sonra normal aralık
+  kesif_her: "24"          # HA keşif mesajlarını her N uyanışta bir gönder (24 x 30 dk = 12 saat)
+
+esphome:
+  name: toprak-sensoru
+  includes:
+    - rtc_diag.h
+    - ayar_ui.h
+    - ayar.h
+  on_boot:
+    # 1) WiFi'dan ÖNCE: sensörü besle (ısınsın) ve pili kontrol et
+    - priority: 590
+      then:
+        - lambda: |-
+            // Kalıcı ayarlar (arayüzden girilen WiFi/MQTT/uyku/kalibrasyon). WiFi bileşeni
+            // kurulmadan önce uygulanmalı: bu lambda priority 590, WiFi 250.
+            // Teşhis sayaçları (RTC): WiFi kararı wifi_ardisik'e baktığı için en başta
+            if (rtc_diag.magic != RTC_DIAG_MAGIC) {
+              memset(&rtc_diag, 0, sizeof(rtc_diag));
+              rtc_diag.magic = RTC_DIAG_MAGIC;
+              rtc_soguk_acilis = true;
+            }
+            ayar_yukle();
+            ayar_wifi_karar(rtc_diag.wifi_ardisik);
+            ayar_wifi_deneme_izle();
+            bitki_yukle();
+            bitki_baglan(id(bitki_adi), id(bitki_turu));
+            ayar_uygula_wifi();
+            ayar_uygula_mqtt();
+            ayar_baglan(id(toprak_ham), id(toprak_ham), id(toprak_nemi), id(pil_voltaj), id(pil_voltaj), id(pil_seviyesi));
+            if (a_ozel_wifi) {
+              ayar_fast_connect_sabitle();
+            } else {
+              // Derlemedeki ağ: fast_connect her açılışta 1. kayıtla başlasın (2. kayıt yedek).
+              // ESP32'nin ilk bağlanma denemesi "Authentication Failed" alıyor,
+              // 2. kayıt anında bağlanıyor. Sabitlenmezse her ikinci açılış taramaya düşer.
+              wifi::SavedWifiFastConnectSettings fc{};
+              unsigned b[6] = {0};
+              sscanf("${wifi_bssid}", "%x:%x:%x:%x:%x:%x", &b[0], &b[1], &b[2], &b[3], &b[4], &b[5]);
+              for (int i = 0; i < 6; i++) fc.bssid[i] = b[i];
+              fc.channel = ${wifi_channel};
+              fc.ap_index = 0;
+              auto pref = global_preferences->make_preference<wifi::SavedWifiFastConnectSettings>(
+                  App.get_config_version_hash() + 1, false);
+              pref.save(&fc);
+            }
+
+            // HA keşfi yalnızca gerektiğinde (teşhis sayaçları yukarıda hazırlandı)
+            rtc_diag.dongu++;
+            bool kesif = rtc_soguk_acilis || (rtc_diag.dongu % ${kesif_her}) == 0;
+            id(kesif_turu) = kesif;
+            id(bilgi_turu) = bilgi_zamani();   // cihaz bilgileri: panelde seçilen aralık (en az 4 saat)
+            if (!kesif) mqtt::global_mqtt_client->disable_discovery();
+            ESP_LOGI("diag", "dongu %u, soguk %d, kesif %d, kacirilan %u",
+                     rtc_diag.dongu, rtc_soguk_acilis, kesif, rtc_diag.kacirilan);
+
+            // Ayar modu: A) BOOT tuşu ile uyandı  B) art arda 3 WiFi hatası  (C: MQTT, aşağıda)
+            //            ya da arayüzden 'yeniden başlat' istendi
+            bool boot = ayar_boot_tusu_ile_uyandi();
+            bool istek = ayar_istek_var();
+            bool wifi_yok = rtc_diag.wifi_ardisik >= 3;
+            if (boot || istek || wifi_yok) {
+              id(ayar_modu) = true;
+              // B'de kurulum ağı hemen açılsın; A'da önce eve bağlanmayı 15 sn dene
+              wifi::global_wifi_component->set_ap_timeout(wifi_yok ? 1000 : 15000);
+              ESP_LOGI("ayar", "AYAR MODU istendi (boot=%d istek=%d wifi_yok=%d)", boot, istek, wifi_yok);
+            }
+        - output.turn_on: sensor_guc
+        - component.update: pil_voltaj
+        - if:
+            condition:
+              lambda: 'return !id(ayar_modu) && !isnan(id(pil_voltaj).state) && id(pil_voltaj).state < ayar_pil_kesim();'
+            then:
+              - logger.log:
+                  level: WARN
+                  format: ">>> PIL DUSUK (%.2f V): WiFi acilmadan 24 saat uyunuyor"
+                  args: ['id(pil_voltaj).state']
+              - output.turn_off: sensor_guc
+              - safe_mode.mark_successful
+              - lambda: 'bilgi_uyku_ekle(24UL * 3600 * 1000);'
+              - deep_sleep.enter:
+                  id: uyku
+                  sleep_duration: 24h
+    # 2) Ölç, gönder, uyu
+    - priority: -100
+      then:
+        - if:
+            condition:
+              lambda: 'return id(ayar_modu);'
+            then:
+              - lambda: 'ayar_modu_baslat();'
+        - wait_until:
+            condition: mqtt.connected
+            timeout: 20s
+        - if:
+            condition:
+              not: mqtt.connected
+            then:
+              # Bağlanamadı: sebebini kaydet, kısa süre sonra tekrar dene (ayar modunda uyuma)
+              - lambda: |-
+                  bool wifi_var = wifi::global_wifi_component->is_connected();
+                  rtc_diag.son_hata = wifi_var ? 2 : 1;
+                  if (!wifi_var) rtc_diag.wifi_ardisik++;
+                  ayar_uyanis_basarisiz();
+                  rtc_diag.kacirilan++;
+                  rtc_diag.toplam_hata++;
+                  ESP_LOGW("diag", "BASARISIZ: %s (wifi ardisik %u)", hata_adi(rtc_diag.son_hata), rtc_diag.wifi_ardisik);
+              - if:
+                  condition:
+                    lambda: 'return !id(ayar_modu);'
+                  then:
+                    - script.execute: uyu
+                    - script.wait: uyu
+              - script.execute: ayar_dongusu
+              - script.wait: ayar_dongusu
+              - script.execute: uyu
+              - script.wait: uyu
+        - lambda: 'id(baglanma_ms) = millis();'
+        - script.execute: olc_gonder
+        - script.wait: olc_gonder
+        # Teslim onayı: kendi 'teslim' konumuza QoS1 yayınlayıp broker'dan geri gelmesini bekle.
+        # Geri geldiyse önceki tüm mesajlar (aynı TCP akışı) broker'a ulaşmıştır. Eskiden sabit
+        # 300 ms bekleniyordu; zayıf sinyalde paket tekrarı gerekince veri uykuya yetişmiyordu.
+        - script.execute: teslim_bekle
+        - script.wait: teslim_bekle
+        - if:
+            condition:
+              lambda: 'return !id(teslim);'
+            then:
+              - if:
+                  condition:
+                    not: mqtt.connected
+                  then:
+                    - lambda: 'rtc_diag.kopma++;'
+                    - wait_until:
+                        condition: mqtt.connected
+                        timeout: 8s
+              - if:
+                  condition: mqtt.connected
+                  then:
+                    - script.execute: olc_gonder
+                    - script.wait: olc_gonder
+                    - script.execute: teslim_bekle
+                    - script.wait: teslim_bekle
+        - if:
+            condition:
+              lambda: 'return id(teslim);'
+            then:
+              - lambda: |-
+                  rtc_diag.kacirilan = 0;
+                  rtc_diag.hizli_deneme = 0;
+                  if (id(bilgi_turu) || id(ayar_modu)) bilgi_gonderildi();
+            else:
+              - lambda: |-
+                  rtc_diag.son_hata = mqtt::global_mqtt_client->is_connected() ? 4 : 3;
+                  rtc_diag.kacirilan++;
+                  rtc_diag.toplam_hata++;
+        - if:
+            condition:
+              lambda: 'return id(ayar_modu);'
+            then:
+              - script.execute: ayar_dongusu
+              - script.wait: ayar_dongusu
+        - script.execute: uyu
+
+script:
+  # Ayar modu: web arayüzü açık, sensör beslemesi açık; 10 dk etkileşim yoksa ya da
+  # arayüzden 'Kaydet ve çık' basılınca biter.
+  - id: ayar_dongusu
+    then:
+      - lambda: 'ayar_modu_baslat();'
+      - logger.log: ">>> AYAR MODU acik"
+      # Panel için cihaz bilgileri (MQTT ile açılan ayar modunda olc_gonder bunları atlamış olabilir)
+      - component.update: bitki_adi
+      - component.update: bitki_turu
+      - component.update: cihaz_ip_adresi
+      - component.update: cihaz_ag_adi
+      - component.update: cihaz_deco_adi
+      - component.update: cihaz_mac_adresi
+      - component.update: cihaz_yazilim_surumu
+      - wait_until:
+          condition:
+            lambda: 'return ayar_bitti();'
+          timeout: 3h
+      - lambda: |-
+          ayar_istek_temizle();     // yarıda kalan yükleme isteği sonraki uyanışı ayar moduna sokmasın
+          ayar_bildirim_temizle();
+      - logger.log: ">>> AYAR MODU bitti"
+
+  - id: olc_gonder
+    then:
+      - component.update: toprak_ham
+      - component.update: pil_voltaj
+      - component.update: wifi_sinyal
+      - component.update: baglanma_suresi
+      - component.update: kacirilan_uyanis
+      - component.update: toplam_hata
+      - component.update: kopma_sayisi
+      - component.update: onceki_uyanik
+      - component.update: son_hata
+      # Bitki adı/türü nadiren değişir (retained): sadece keşif turlarında ve ayar modunda yayınla
+      - if:
+          condition:
+            lambda: 'return id(kesif_turu) || id(ayar_modu);'
+          then:
+            - component.update: bitki_adi
+            - component.update: bitki_turu
+      # Cihaz bilgileri (retained): panelde seçilen aralıkla, soğuk açılışta ve ayar modunda
+      - if:
+          condition:
+            lambda: 'return id(bilgi_turu) || id(ayar_modu);'
+          then:
+            - component.update: cihaz_ip_adresi
+            - component.update: cihaz_ag_adi
+            - component.update: cihaz_deco_adi
+            - component.update: cihaz_mac_adresi
+            - component.update: cihaz_yazilim_surumu
+
+  - id: teslim_bekle
+    then:
+      - lambda: 'id(teslim) = false;'
+      - mqtt.publish:
+          topic: toprak-sensoru/teslim
+          payload: !lambda 'return to_string(rtc_diag.dongu);'
+          qos: 1
+      - wait_until:
+          condition:
+            lambda: 'return id(teslim);'
+          timeout: 3s
+
+  - id: uyu
+    then:
+      - output.turn_off: sensor_guc
+      - safe_mode.mark_successful
+      - lambda: 'rtc_diag.onceki_uyanik = millis();'
+      - logger.log:
+          level: INFO
+          format: ">>> UYANIK KALMA: %u ms (MQTT baglanti: %u ms)"
+          args: ['millis()', 'id(baglanma_ms)']
+      - if:
+          condition:
+            lambda: 'return rtc_diag.kacirilan > 0 && rtc_diag.hizli_deneme < ${hizli_deneme_max};'
+          then:
+            - lambda: |-
+                rtc_diag.hizli_deneme++;
+                bilgi_uyku_ekle(${hizli_uyku_ms});
+            - deep_sleep.enter:
+                id: uyku
+                sleep_duration: ${hizli_uyku}
+          else:
+            - lambda: 'bilgi_uyku_ekle(ayar_uyku_ms());'
+            - deep_sleep.enter:
+                id: uyku
+                sleep_duration: !lambda 'return ayar_uyku_ms();'
+
+esp32:
+  board: esp32-s3-devkitc-1
+  variant: esp32s3
+  framework:
+    type: esp-idf
+
+globals:
+  - id: ayar_modu
+    type: bool
+    initial_value: 'false'
+  - id: baglanma_ms
+    type: uint32_t
+    initial_value: '0'
+  - id: teslim
+    type: bool
+    initial_value: 'false'
+  - id: bilgi_turu          # bu uyanışta cihaz bilgileri (IP, ağ, MAC...) gidiyor mu
+    type: bool
+    initial_value: 'false'
+  - id: kesif_turu          # bu uyanışta HA keşif mesajları gidiyor mu (soğuk açılış / her N uyanış)
+    type: bool
+    initial_value: 'false'
+
+logger:
+  level: DEBUG
+  baud_rate: 0              # USB/seri log kapalı (teşhis gerekirse geçici olarak 115200 yap): bağlı bilgisayar yokken log yazımı açılışı yavaşlatıyor.
+
+mdns:
+  disabled: true            # IP sabit; mDNS'e gerek yok, açılış kısalır
+
+ota:
+  - platform: esphome
+  - platform: web_server     # arayüzden .bin yükleme (sadece ayar modunda erişilebilir)
+
+# Ayar modu web sunucusu (ayar.h başlatır; normal uyanışta çalışmaz)
+captive_portal:
+
+safe_mode:
+  boot_is_good_after: 10s   # ayrıca her başarılı döngüde elle işaretleniyor
+
+wifi:
+  networks:
+    # Aynı ağ iki kez: 1. deneme başarısız olursa tarama yapmadan 2. kayıt denenir.
+    - ssid: !secret wifi_ssid
+      password: !secret wifi_password
+      bssid: ${wifi_bssid}
+      channel: ${wifi_channel}
+    - ssid: !secret wifi_ssid
+      password: !secret wifi_password
+      bssid: ${wifi_bssid}
+      channel: ${wifi_channel}
+  fast_connect: true
+  power_save_mode: none
+  manual_ip:
+    static_ip: ${static_ip}
+    gateway: ${gateway}
+    subnet: ${subnet}
+    dns1: ${dns}
+  # MQTT, açılıştan sonra ilk denemeyi en erken 5. saniyede yapıyor. Kapalı başlatıp
+  # WiFi bağlandığı anda açınca bağlanma hemen başlıyor (~4.7 sn kazanç).
+  on_connect:
+    - mqtt.enable
+    - lambda: |-
+        rtc_diag.wifi_ardisik = 0;
+  # Kurulum ağı: sadece ayar modunda (ap_timeout ayar.h/on_boot'ta kısaltılır)
+  ap:
+    ssid: "Toprak-Sensoru-Kurulum"
+    ap_timeout: 15min
+
+mqtt:
+  broker: !secret mqtt_broker
+  enable_on_boot: false      # WiFi bağlanınca açılıyor (wifi.on_connect)
+  discovery: true
+  log_topic: null            # logları MQTT'ye gönderme (her uyanışta onlarca mesaj tasarrufu)
+  birth_message:
+  will_message:
+  on_connect:
+    - lambda: 'ayar_mqtt_baglandi();'   # yeni WiFi denemesi başarılı / varsayılan ağ çalıştı
+  on_message:
+    - topic: toprak-sensoru/teslim
+      then:
+        - lambda: 'id(teslim) = true;'
+    - topic: toprak-sensoru/ayar_modu
+      payload: "ON"
+      then:
+        - lambda: 'id(ayar_modu) = true;'
+        # Tek seferlik anahtar: kaydı sil, yoksa her uyanışta ayar moduna girer ve pili tüketir
+        - mqtt.publish:
+            topic: toprak-sensoru/ayar_modu
+            payload: ""
+            retain: true
+    # Panelden: cihaz bilgisi gönderme aralığı (saat, retained, en az 4). Sonraki uyanışlarda geçerli.
+    - topic: toprak-sensoru/bilgi_araligi
+      then:
+        - lambda: 'bilgi_araligi_al(x);'
+    - topic: toprak-sensoru/ota_mode
+      payload: "ON"
+      then:
+        - lambda: 'id(ayar_modu) = true;'
+        - mqtt.publish:
+            topic: toprak-sensoru/ota_ack
+            payload: !lambda 'return "uyanik kaliyor, mesaj " + to_string(millis()) + " ms de geldi";'
+        - mqtt.publish:
+            topic: toprak-sensoru/ota_mode
+            payload: ""
+            retain: true
+
+deep_sleep:
+  id: uyku
+  sleep_duration: ${uyku_suresi}   # varsayılan; gerçek değer arayüzdeki 'uyku aralığı'
+  wakeup_pin:                      # BOOT tuşu (IO0) uykudan uyandırır -> ayar modu
+    number: GPIO0
+    inverted: true
+    ignore_strapping_warning: true
+    mode:
+      input: true
+      pullup: true
+
+output:
+  - platform: gpio
+    pin: GPIO2
+    id: sensor_guc
+
+sensor:
+  - platform: adc
+    pin: GPIO1
+    id: toprak_ham
+    name: "Toprak Ham Voltaj"
+    attenuation: 12db
+    samples: 16
+    accuracy_decimals: 3
+    update_interval: never
+    expire_after: ${veri_omru}
+
+  - platform: copy
+    source_id: toprak_ham
+    id: toprak_nemi
+    name: "Toprak Nemi"
+    unit_of_measurement: "%"
+    device_class: moisture
+    accuracy_decimals: 0
+    expire_after: ${veri_omru}
+    filters:
+      - lambda: 'return ayar_nem(x);'   # kuru/ıslak voltajı arayüzden kalibre edilir
+
+  - platform: adc
+    pin:
+      number: GPIO3
+      ignore_strapping_warning: true   # kartın kendi pil ölçüm pini
+    id: pil_voltaj
+    name: "Pil Voltajı"
+    attenuation: 12db
+    samples: 16
+    accuracy_decimals: 2
+    update_interval: never
+    expire_after: ${veri_omru}
+    filters:
+      - multiply: 2.0   # kartın 100k/100k bölücüsü (multimetreyle doğrulandı)
+
+  - platform: copy
+    source_id: pil_voltaj
+    id: pil_seviyesi
+    name: "Pil Seviyesi"
+    unit_of_measurement: "%"
+    device_class: battery
+    accuracy_decimals: 0
+    expire_after: ${veri_omru}
+    filters:
+      - calibrate_linear:
+          - 3.40 -> 0.0
+          - 4.15 -> 100.0
+      - clamp:
+          min_value: 0
+          max_value: 100
+
+  - platform: wifi_signal
+    id: wifi_sinyal
+    name: "WiFi Sinyal"
+    update_interval: never
+    expire_after: ${veri_omru}
+
+  - platform: template
+    id: baglanma_suresi
+    name: "Bağlanma Süresi"
+    unit_of_measurement: ms
+    accuracy_decimals: 0
+    update_interval: never
+    entity_category: diagnostic
+    lambda: 'return id(baglanma_ms);'
+
+  # --- Teşhis (kaçırılan uyanışlar ve sebebi) ---
+  - platform: template
+    id: kacirilan_uyanis
+    name: "Kaçırılan Uyanış"
+    accuracy_decimals: 0
+    update_interval: never
+    entity_category: diagnostic
+    lambda: 'return rtc_diag.kacirilan;'
+
+  - platform: template
+    id: toplam_hata
+    name: "Toplam Hata"
+    accuracy_decimals: 0
+    update_interval: never
+    entity_category: diagnostic
+    lambda: 'return rtc_diag.toplam_hata;'
+
+  - platform: template
+    id: kopma_sayisi
+    name: "Kopma Sayısı"
+    accuracy_decimals: 0
+    update_interval: never
+    entity_category: diagnostic
+    lambda: 'return rtc_diag.kopma;'
+
+  - platform: template
+    id: onceki_uyanik
+    name: "Önceki Uyanık Kalma"
+    unit_of_measurement: ms
+    accuracy_decimals: 0
+    update_interval: never
+    entity_category: diagnostic
+    lambda: 'return rtc_diag.onceki_uyanik;'
+
+text_sensor:
+  - platform: template
+    id: son_hata
+    name: "Son Hata"
+    update_interval: never
+    entity_category: diagnostic
+    lambda: 'return std::string(hata_adi(rtc_diag.son_hata));'
+
+  # Bitki profili (arayüzden girilir, ayar.h). HA'da bakım verisi (OpenPlantbook) için kullanılacak.
+  - platform: template
+    id: bitki_adi
+    name: "Bitki"
+    icon: mdi:sprout
+    update_interval: never
+    lambda: 'return bitki_ad();'
+
+  - platform: template
+    id: bitki_turu
+    name: "Bitki Türü"
+    icon: mdi:flower-tulip
+    update_interval: never
+    lambda: 'return bitki_tur();'
+
+  - platform: template
+    id: cihaz_ip_adresi
+    name: "IP Adresi"
+    state_topic: toprak-sensoru/sensor/ip_adresi/state
+    update_interval: never
+    entity_category: diagnostic
+    lambda: 'return cihaz_ip();'
+
+  - platform: template
+    id: cihaz_ag_adi
+    name: "WiFi Ağı"
+    state_topic: toprak-sensoru/sensor/ag_adi/state
+    update_interval: never
+    entity_category: diagnostic
+    lambda: 'return cihaz_ag();'
+
+  - platform: template
+    id: cihaz_deco_adi
+    name: "Bağlı Erişim Noktası"
+    state_topic: toprak-sensoru/sensor/bagli_deco/state
+    update_interval: never
+    entity_category: diagnostic
+    lambda: 'return cihaz_deco();'
+
+  - platform: template
+    id: cihaz_mac_adresi
+    name: "MAC Adresi"
+    state_topic: toprak-sensoru/sensor/mac_adresi/state
+    update_interval: never
+    entity_category: diagnostic
+    lambda: 'return cihaz_mac();'
+
+  - platform: template
+    id: cihaz_yazilim_surumu
+    name: "Yazılım Sürümü"
+    state_topic: toprak-sensoru/sensor/yazilim/state
+    update_interval: never
+    entity_category: diagnostic
+    lambda: 'return cihaz_yazilim();'
+
+# Ayar modunda canlı ölçüm (arayüz 5 sn'de bir günceller)
+interval:
+  - interval: 5s
+    then:
+      - if:
+          condition:
+            lambda: 'return ayar_modu_aktif();'
+          then:
+            - component.update: toprak_ham
+            - component.update: pil_voltaj
+            - component.update: wifi_sinyal

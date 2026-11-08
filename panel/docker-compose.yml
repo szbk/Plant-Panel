@@ -1,0 +1,20 @@
+services:
+  plant-panel:
+    build: .
+    container_name: plant-panel
+    restart: unless-stopped
+    ports:
+      - "${PANEL_PORT:-8090}:8090"
+    environment:
+      # MQTT broker the sensors publish to (copy .env.example to .env and edit)
+      MQTT_HOST: ${MQTT_HOST:-host.docker.internal}
+      MQTT_PORT: ${MQTT_PORT:-1883}
+      MQTT_USER: ${MQTT_USER:-}
+      MQTT_PASS: ${MQTT_PASS:-}
+      # Optional fallback device addresses: "sensor-id=ip,sensor-id=ip"
+      CIHAZ_ADRESLERI: ${CIHAZ_ADRESLERI:-}
+      TZ: ${TZ:-UTC}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./veri:/veri

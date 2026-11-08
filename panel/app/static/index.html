@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Plant Panel</title>
+<style>
+:root{color-scheme:light;--bg:#f4f1ea;--kart:#fffdf8;--yazi:#2b2a26;--soluk:#6f6b61;--cizgi:#e4ded1;--seri:#2f7d4a;--iyi:#2f7d4a;--iyi2:#e3efe4;--uyari:#8a6210;--uyari2:#f5ead2;--kotu:#b4442f;--kotu2:#f6e1db;--r:16px}
+@media (prefers-color-scheme:dark){:root{color-scheme:dark;--bg:#1b1c19;--kart:#24261f;--yazi:#ecebe4;--soluk:#a9a79b;--cizgi:#37392f;--seri:#2f9a58;--iyi:#7cc08b;--iyi2:#26372a;--uyari:#e0b45a;--uyari2:#3a3120;--kotu:#e2806b;--kotu2:#3d2722}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--yazi);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:980px;margin:auto;padding:16px;display:grid;gap:14px}
+.kart{background:var(--kart);border:1px solid var(--cizgi);border-radius:var(--r);padding:18px}
+.ust{display:grid;grid-template-columns:minmax(0,4fr) minmax(0,7fr);gap:24px;align-items:stretch}
+.foto{display:flex;flex-direction:column;gap:10px;min-width:0}
+.foto-alan{height:440px;border-radius:12px;display:flex;align-items:center;justify-content:center}
+.foto-alan.bos{background:var(--bg)}
+.foto-alan img{display:block;max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain}
+.foto-islem{display:flex;justify-content:center;gap:6px}
+button,.dugme{font:inherit;font-size:13px;font-weight:600;border:1px solid var(--cizgi);border-radius:9px;padding:7px 11px;background:var(--kart);color:var(--yazi);cursor:pointer}
+button:focus-visible,.dugme:focus-within{outline:2px solid var(--seri);outline-offset:1px}
+.dugme input{position:absolute;width:1px;height:1px;opacity:0}
+.bilgi{display:flex;flex-direction:column;min-width:0}
+h1{font-size:26px;line-height:1.15;margin:0;letter-spacing:-.01em}
+.tur{color:var(--soluk);font-style:italic;min-height:1.4em}
+.nem{margin:14px 0 2px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.nem b{font-size:60px;line-height:1;font-weight:680;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.nem span{color:var(--soluk)}
+.durum{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:8px;font-size:13px;color:var(--soluk)}
+.rozet{padding:3px 9px;border-radius:99px;font-size:12px;font-weight:600;background:var(--bg);color:var(--soluk)}
+.rozet.iyi{background:var(--iyi2);color:var(--iyi)}.rozet.uyari{background:var(--uyari2);color:var(--uyari)}.rozet.kotu{background:var(--kotu2);color:var(--kotu)}
+.aciklama{margin-top:14px;font-size:14.5px;line-height:1.6;max-width:62ch}
+.aciklama p{margin:0;white-space:pre-line}
+.aciklama button{margin-top:8px;padding:4px 9px;font-size:12px;font-weight:500;color:var(--soluk)}
+.aciklama textarea{width:100%;min-height:130px;font:inherit;color:var(--yazi);background:var(--bg);border:1px solid var(--cizgi);border-radius:10px;padding:9px 11px;resize:vertical}
+.aciklama textarea:focus{outline:2px solid var(--seri);outline-offset:-1px}
+.aciklama .satir{display:flex;gap:6px}
+.anahtar{display:flex;align-items:center;gap:12px;margin-top:14px;padding:10px 12px;background:var(--bg);border-radius:10px;cursor:pointer}
+.anahtar input{position:absolute;opacity:0;width:1px;height:1px}
+.anahtar i{flex:none;position:relative;width:42px;height:24px;border-radius:99px;background:var(--cizgi);transition:background .15s}
+.anahtar i::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .15s}
+.anahtar input:checked+i{background:var(--seri)}.anahtar input:checked+i::after{transform:translateX(18px)}
+.anahtar input:focus-visible+i{outline:2px solid var(--seri);outline-offset:2px}
+.anahtar input:disabled+i{opacity:.5}
+.anahtar b{display:block;font-size:14px;font-weight:600}
+.anahtar small{display:block;font-size:12.5px;color:var(--soluk)}
+.anahtar small a{color:inherit}
+.bilgiler{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:2px 28px;margin:12px 0 0}
+.bilgiler div{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid var(--cizgi);font-size:13.5px;min-width:0}
+.bilgiler dt{color:var(--soluk)}.bilgiler dd{margin:0;text-align:right;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.bilgiler a{color:inherit}
+.kutular{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:auto;padding-top:16px}
+.kutu{background:var(--bg);border-radius:10px;padding:9px 11px;min-width:0}
+.kutu span{display:block;font-size:12px;color:var(--soluk)}
+.kutu b{display:block;font-size:19px;font-weight:650;font-variant-numeric:tabular-nums}
+.araclar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.araclar h2{font-size:16px;margin:0}
+.secim{display:flex;gap:4px;background:var(--bg);border-radius:10px;padding:3px}
+.secim button{border:0;background:transparent;color:var(--soluk);font-weight:500}
+.secim button[aria-pressed=true]{background:var(--kart);color:var(--yazi);font-weight:600}
+.grafik{margin-top:16px}
+.grafik h3{font-size:14px;margin:0;font-weight:600}
+.grafik .alt{font-size:12.5px;color:var(--soluk)}
+.alan{position:relative;touch-action:pan-y}
+svg{display:block;width:100%;height:170px}
+svg text{fill:var(--soluk);font-size:11px;font-family:inherit;font-variant-numeric:tabular-nums}
+.izgara{stroke:var(--cizgi);stroke-width:1}
+.cizgi{fill:none;stroke:var(--seri);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+.nokta{fill:var(--seri);stroke:var(--kart);stroke-width:2}
+.dikey{stroke:var(--soluk);stroke-width:1}
+.ipucu{position:absolute;top:4px;pointer-events:none;background:var(--kart);border:1px solid var(--cizgi);border-radius:8px;padding:5px 9px;font-size:12px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+.ipucu b{display:block;font-size:14px}
+.ipucu span{color:var(--soluk)}
+details summary{cursor:pointer;font-weight:600}
+.tablo{overflow-x:auto;margin-top:10px}
+table{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
+th,td{text-align:right;padding:6px 8px;border-bottom:1px solid var(--cizgi);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{color:var(--soluk);font-weight:500}
+.not{font-size:12.5px;color:var(--soluk);margin:0}
+.hata{color:var(--kotu);font-size:13px;min-height:1.2em;margin-top:6px}
+.kartlar{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+a.skart{display:flex;flex-direction:column;gap:6px;color:inherit;text-decoration:none;background:var(--kart);border:1px solid var(--cizgi);border-radius:var(--r);padding:16px;min-width:0}
+a.skart:hover{border-color:var(--seri)}a.skart:focus-visible{outline:2px solid var(--seri);outline-offset:2px}
+.skart-foto{height:230px;display:flex;align-items:center;justify-content:center;border-radius:10px}
+.skart-foto.bos{background:var(--bg);color:var(--soluk);font-size:13px}
+.skart-foto img{display:block;max-width:100%;max-height:100%;object-fit:contain}
+.skart h2{font-size:18px;margin:6px 0 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.skart-nem{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.skart-nem b{font-size:34px;line-height:1.1;font-weight:680;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.skart .ek{font-size:13px;color:var(--soluk);display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+svg.iz{width:110px;height:36px;flex:none}
+.baslik{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.baslik h1{font-size:24px}
+a.geri{color:var(--soluk);font-size:14px;text-decoration:none;justify-self:start}a.geri:hover{color:var(--yazi)}
+.aralik{margin-top:16px;padding:12px 14px;background:var(--bg);border-radius:10px}
+.aralik label{display:block;font-size:14px;font-weight:600;margin-bottom:8px}
+.aralik .satir{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.aralik input{width:90px;font:inherit;font-variant-numeric:tabular-nums;color:var(--yazi);background:var(--kart);border:1px solid var(--cizgi);border-radius:9px;padding:6px 9px}
+.aralik input:focus{outline:2px solid var(--seri);outline-offset:-1px}
+.aralik .not{margin-top:8px}
+.pil-uyari{margin-top:10px;padding:9px 11px;border-radius:9px;background:var(--uyari2);color:var(--uyari);font-size:13px;line-height:1.5}
+.pil-uyari b{font-weight:650}
+.gizli{display:none!important}
+@media (max-width:680px){.ust{grid-template-columns:1fr}.foto-alan{height:380px}.nem b{font-size:52px}.kutu{padding:8px 9px}.kutu b{font-size:16px;white-space:nowrap}}
+</style>
+</head>
+<body>
+<main id="liste">
+  <div class="baslik"><h1>Bitkilerim</h1><span class="not" id="listeAlt"></span></div>
+  <div class="kartlar" id="kartlar"></div>
+  <div class="hata" id="listeHata" role="alert"></div>
+</main>
+<main id="detay" class="gizli">
+<a class="geri" href="#/">← Tüm sensörler</a>
+<section class="kart ust">
+  <div class="foto" id="foto">
+    <div class="foto-alan bos" id="fotoAlan"><img id="fotoImg" class="gizli" alt="Bitkinin fotoğrafı"></div>
+    <div class="foto-islem">
+      <label class="dugme"><span id="fotoEtiket">Fotoğraf ekle</span><input type="file" id="dosya" accept="image/*"></label>
+      <button id="fotoSil" class="gizli">Kaldır</button>
+    </div>
+  </div>
+  <div class="bilgi">
+    <h1 id="ad">Bitkim</h1>
+    <div class="tur" id="tur"></div>
+    <div class="nem"><b id="nem">–</b><span>toprak nemi</span></div>
+    <div class="durum"><span class="rozet" id="rozet">Yükleniyor</span><span id="zaman"></span></div>
+    <div class="aciklama">
+      <div id="acikGoster"><p id="acikMetin"></p><button id="acikDuzenle">Açıklama ekle</button></div>
+      <div id="acikForm" class="gizli"><textarea id="acikAlan" maxlength="2000" aria-label="Bitki açıklaması"></textarea>
+        <div class="satir"><button id="acikKaydet">Kaydet</button><button id="acikVazgec">Vazgeç</button></div></div>
+    </div>
+    <label class="anahtar"><input type="checkbox" role="switch" id="ayarAnahtar"><i></i>
+      <span><b>Sunucu modu</b><small id="ayarDurum"></small></span></label>
+    <div class="hata" id="hata" role="alert"></div>
+    <div class="kutular">
+      <div class="kutu"><span>Pil</span><b id="pil">–</b><span id="pilAlt"></span></div>
+      <div class="kutu"><span>WiFi sinyali</span><b id="rssi">–</b><span id="rssiAlt"></span></div>
+      <div class="kutu"><span>Hata</span><b id="hataSay">–</b><span id="hataAlt"></span></div>
+    </div>
+  </div>
+</section>
+
+<section class="kart">
+  <div class="araclar">
+    <h2>Geçmiş</h2>
+    <div class="secim" id="secim">
+      <button data-saat="24" aria-pressed="true">24 saat</button>
+      <button data-saat="168" aria-pressed="false">7 gün</button>
+      <button data-saat="720" aria-pressed="false">30 gün</button>
+    </div>
+  </div>
+  <div class="grafik"><h3>Toprak nemi</h3><div class="alt" id="alt-nem"></div><div class="alan" id="g-nem"></div></div>
+  <div class="grafik"><h3>Pil voltajı</h3><div class="alt" id="alt-pil"></div><div class="alan" id="g-pil"></div></div>
+  <div class="grafik"><h3>WiFi sinyali</h3><div class="alt" id="alt-rssi"></div><div class="alan" id="g-rssi"></div></div>
+</section>
+
+<section class="kart">
+  <h2 style="font-size:16px;margin:0">Sensör bilgileri</h2>
+  <dl class="bilgiler" id="bilgiler"></dl>
+  <p class="not" style="margin-top:10px">Ayar sayfası yalnızca sensör sunucu modundayken açılır.</p>
+  <div class="aralik">
+    <label for="bilgiSaat">Cihaz bilgisi gönderme aralığı</label>
+    <div class="satir"><input type="number" id="bilgiSaat" min="4" max="720" step="1" inputmode="numeric"><span>saat</span>
+      <button id="bilgiKaydet">Kaydet</button><span class="not" id="bilgiDurum"></span></div>
+    <p class="not">IP adresi, WiFi ağı, erişim noktası, MAC ve yazılım sürümü bu aralıkla gönderilir. En az 4 saat. Sensör ayrıca açıldığında ve sunucu modunda da gönderir. Yeni değer sensörün bir sonraki uyanışından sonra geçerli olur.</p>
+    <div class="pil-uyari" role="note"><b>Pil ömrünü etkiler:</b> Aralık ne kadar kısa olursa sensör o kadar sık fazladan veri gönderir ve uyanık kaldığı süre uzar, pil o kadar çabuk biter. Ağ bilgileri pek değişmediği için uzun bir aralık (ör. 24 saat ya da daha fazla) önerilir.</div>
+  </div>
+</section>
+
+<section class="kart">
+  <details id="tabloAc"><summary>Son ölçümler</summary>
+    <div class="tablo"><table><thead><tr><th>Zaman</th><th>Nem</th><th>Ham</th><th>Pil</th><th>Sinyal</th><th>Bağlanma</th><th>Son hata</th></tr></thead><tbody id="tablo"></tbody></table></div>
+  </details>
+</section>
+<p class="not" id="alt"></p>
+</main>
+<script>
+const $=i=>document.getElementById(i);
+const say=(v,d=0)=>v==null?'–':Number(v).toLocaleString('tr-TR',{minimumFractionDigits:d,maximumFractionDigits:d});
+const yuzde=v=>v==null?'–':'%'+say(v);
+const SERILER={
+  nem:{fmt:yuzde,d:0,enAz:8,sinir:[0,100]},
+  pil:{fmt:v=>say(v,2)+' V',d:2,enAz:.1},
+  rssi:{fmt:v=>say(v)+' dBm',d:0,enAz:10}
+};
+let saat=24,D=null,G=null,ID=null;
+const A=()=>'/api/sensor/'+encodeURIComponent(ID);
+function sure(sn){if(sn<90)return 'az önce';const dk=Math.round(sn/60);if(dk<60)return dk+' dk önce';const s=Math.round(dk/60);if(s<48)return s+' saat önce';return Math.round(s/24)+' gün önce'}
+function sinyal(r){return r==null?'':r>=-55?'Çok iyi':r>=-67?'İyi':r>=-75?'Zayıf':'Çok zayıf'}
+function saatYaz(ts,uzun){const t=new Date(ts*1000);return t.toLocaleString('tr-TR',uzun?{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}:{hour:'2-digit',minute:'2-digit'})}
+async function json(y){const r=await fetch(y);if(!r.ok)throw new Error(r.status);return r.json()}
+
+function rozetBilgi(d,mqtt){
+  const gecikme=d.aralik_sn?d.aralik_sn*2.5:1800;
+  if(!mqtt)return ['MQTT bağlantısı yok','kotu'];
+  if(d.yas_sn>gecikme)return ['Veri gecikti','uyari'];
+  return ['Veri geliyor','iyi'];
+}
+function iz(l){
+  const ns='http://www.w3.org/2000/svg',s=document.createElementNS(ns,'svg');s.setAttribute('class','iz');s.setAttribute('viewBox','0 0 110 36');s.setAttribute('aria-hidden','true');
+  if(l.length<2)return s;
+  const v=l.map(n=>n.nem),lo=Math.min(...v),hi=Math.max(Math.max(...v),lo+5),t0=l[0].ts,t1=l[l.length-1].ts;
+  const X=t=>4+(t-t0)/(t1-t0)*100,Y=n=>32-(n-lo)/(hi-lo)*28;
+  const p=document.createElementNS(ns,'path');p.setAttribute('class','cizgi');p.setAttribute('d',l.map((n,i)=>(i?'L':'M')+X(n.ts).toFixed(1)+' '+Y(n.nem).toFixed(1)).join(''));s.appendChild(p);return s;
+}
+function kart(d,mqtt){
+  const a=document.createElement('a');a.className='skart';a.href='#/sensor/'+encodeURIComponent(d.id);
+  const f=document.createElement('div');f.className='skart-foto'+(d.foto?'':' bos');
+  if(d.foto){const i=document.createElement('img');i.src='/foto/'+encodeURIComponent(d.id)+'?v='+d.foto;i.alt=d.bitki+' fotoğrafı';f.appendChild(i)}else f.textContent='Fotoğraf yok';
+  const h=document.createElement('h2');h.textContent=d.bitki;
+  const n=document.createElement('div');n.className='skart-nem';const b=document.createElement('b');b.textContent=d.son_nem?yuzde(d.son_nem.nem):'–';n.append(b,iz(d.iz||[]));
+  const [rt,rc]=rozetBilgi(d,mqtt),r=document.createElement('div');r.className='durum';const rs=document.createElement('span');rs.className='rozet '+rc;rs.textContent=rt;const z=document.createElement('span');z.textContent=sure(d.yas_sn);r.append(rs,z);
+  const e=document.createElement('div');e.className='ek';const s=d.son;const e1=document.createElement('span');e1.textContent='Pil '+(s.pil==null?'–':say(s.pil,2)+' V');const e2=document.createElement('span');e2.textContent='Sinyal '+(s.rssi==null?'–':say(s.rssi)+' dBm');e.append(e1,e2);
+  a.append(f,h,n,r,e);return a;
+}
+async function listeYenile(){
+  try{
+    const l=await json('/api/sensorler'),k=$('kartlar');k.textContent='';
+    l.sensorler.forEach(d=>k.appendChild(kart(d,l.mqtt_bagli)));
+    $('listeAlt').textContent=l.sensorler.length?l.sensorler.length+' sensör':'';
+    $('listeHata').textContent=l.sensorler.length?'':'Henüz sensör yok. İlk ölçüm gelince burada görünür.';
+  }catch(e){$('listeHata').textContent='Sunucuya ulaşılamıyor.'}
+}
+function ayarCiz(d){
+  const a=d.ayar_modu,u=$('ayarDurum'),k=$('ayarAnahtar');u.textContent='';
+  k.checked=a.bekliyor;k.disabled=!d.mqtt_bagli;
+  if(!d.mqtt_bagli){u.textContent='MQTT bağlantısı yok';return}
+  if(a.bekliyor){
+    const kalan=d.aralik_sn?Math.max(0,d.aralik_sn-d.yas_sn):null;
+    u.textContent='Sonraki uyanışta açılacak'+(kalan==null?'':kalan<60?' · 1 dk içinde':' · yaklaşık '+Math.round(kalan/60)+' dk sonra');return}
+  if(a.acildi_sn!=null){
+    u.append('Sensör sunucu modunda');
+    if(a.adres){u.append(': ');const l=document.createElement('a');l.href='http://'+a.adres+'/';l.target='_blank';l.rel='noopener';l.textContent=a.adres;u.append(l)}
+    return}
+  u.textContent='Açınca sensör sonraki uyanışında ayar sayfasını açar';
+}
+function bilgilerCiz(d){
+  const c=d.cihaz||{},k=$('bilgiler'),adres=(d.ayar_modu||{}).adres||c.ip;k.textContent='';
+  const [deco,kanal]=(c.deco||'').split(' k');
+  const satir=(ad,v,href)=>{const r=document.createElement('div'),t=document.createElement('dt'),e=document.createElement('dd');t.textContent=ad;
+    if(href&&v){const l=document.createElement('a');l.href=href;l.target='_blank';l.rel='noopener';l.textContent=v;e.appendChild(l)}else e.textContent=v||'–';r.append(t,e);k.appendChild(r)};
+  satir('Ayar sayfası',adres?'http://'+adres+'/':'',adres?'http://'+adres+'/':null);
+  satir('IP adresi',c.ip||adres);satir('WiFi ağı',c.ag);satir('Erişim noktası',deco);satir('WiFi kanalı',kanal);satir('MAC adresi',c.mac);
+  satir('Sensör kimliği',d.id);satir('Yazılım sürümü',c.yazilim);satir('MQTT sunucusu',d.mqtt_sunucu);
+  satir('Ölçüm aralığı',d.aralik_sn?'Yaklaşık '+Math.round(d.aralik_sn/60)+' dk':'');
+  const b=d.bilgi_araligi,g=$('bilgiSaat');
+  if(b&&document.activeElement!==g&&!g.dataset.degisti){g.value=b.saat;g.min=b.en_az;g.max=b.en_cok}
+  if(b&&!$('bilgiDurum').dataset.kalici)$('bilgiDurum').textContent=b.varsayilan?'(varsayılan)':'';
+}
+function durumCiz(){
+  const d=D,s=d.son||{};
+  $('ad').textContent=d.bitki;$('tur').textContent=d.tur||'';document.title=d.bitki+' · Plant Panel';
+  $('nem').textContent=d.son_nem?yuzde(d.son_nem.nem):'–';
+  $('acikMetin').textContent=d.aciklama||'';$('acikDuzenle').textContent=d.aciklama?'Düzenle':'Açıklama ekle';
+  ayarCiz(d);bilgilerCiz(d);
+  const rz=$('rozet');
+  const [rt,rc]=rozetBilgi(d,d.mqtt_bagli);rz.textContent=rt;rz.className='rozet '+rc;
+  $('zaman').textContent=d.son?'Son ölçüm '+sure(d.yas_sn)+(d.aralik_sn?' · yaklaşık '+Math.round(d.aralik_sn/60)+' dk arayla':''):'';
+  $('pil').textContent=s.pil==null?'–':say(s.pil,2)+' V';$('pilAlt').textContent=s.pil_yuzde==null?'':yuzde(s.pil_yuzde);
+  $('rssi').textContent=s.rssi==null?'–':say(s.rssi)+' dBm';$('rssiAlt').textContent=sinyal(s.rssi);
+  $('hataSay').textContent=s.toplam_hata==null?'–':say(s.toplam_hata);$('hataAlt').textContent=s.son_hata&&s.son_hata!='Yok'?'Son: '+s.son_hata:'Son hata yok';
+  const var_=d.foto!=null,img=$('fotoImg');
+  img.classList.toggle('gizli',!var_);$('fotoAlan').classList.toggle('bos',!var_);$('fotoSil').classList.toggle('gizli',!var_);
+  $('fotoEtiket').textContent=var_?'Değiştir':'Fotoğraf ekle';
+  if(!var_)img.removeAttribute('src');
+  if(var_&&img.dataset.v!=d.foto){img.dataset.v=d.foto;img.src='/foto/'+encodeURIComponent(ID)+'?v='+d.foto}
+  $('alt').textContent=say(d.olcum_sayisi)+' ölçüm kayıtlı · MQTT: '+d.mqtt_sunucu;
+}
+
+function grafik(ad){
+  const kap=$('g-'+ad),sr=SERILER[ad],W=kap.clientWidth||600,H=170,sol=46,sag=58,ust=10,alt=22;
+  const p=G.noktalar.filter(n=>n[ad]!=null);
+  kap.textContent='';
+  const ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg');
+  const el=(t,a,ic)=>{const e=document.createElementNS(ns,t);for(const k in a)e.setAttribute(k,a[k]);if(ic!=null)e.textContent=ic;svg.appendChild(e);return e};
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);svg.setAttribute('role','img');kap.appendChild(svg);
+  if(!p.length){el('text',{x:W/2,y:H/2,'text-anchor':'middle'},'Bu aralıkta veri yok');$('alt-'+ad).textContent='';return}
+  let lo=Math.min(...p.map(n=>n[ad])),hi=Math.max(...p.map(n=>n[ad]));
+  const orta=(lo+hi)/2,yari=Math.max((hi-lo)*.6,sr.enAz/2);lo=orta-yari;hi=orta+yari;
+  if(sr.sinir){if(lo<sr.sinir[0]){hi+=sr.sinir[0]-lo;lo=sr.sinir[0]}if(hi>sr.sinir[1]){lo=Math.max(sr.sinir[0],lo-(hi-sr.sinir[1]));hi=sr.sinir[1]}}
+  const X=t=>sol+(t-G.bas)/(G.bit-G.bas)*(W-sol-sag),Y=v=>ust+(1-(v-lo)/(hi-lo))*(H-ust-alt);
+  for(let i=0;i<=2;i++){const v=lo+(hi-lo)*i/2,y=Y(v);el('line',{class:'izgara',x1:sol,x2:W-sag,y1:y,y2:y});el('text',{x:sol-7,y:y+4,'text-anchor':'end'},say(v,sr.d==2?2:0))}
+  const adim=W<520?3:5;
+  for(let i=0;i<=adim;i++){const t=G.bas+(G.bit-G.bas)*i/adim;el('text',{x:X(t),y:H-5,'text-anchor':i==0?'start':i==adim?'end':'middle'},saat>48?new Date(t*1000).toLocaleDateString('tr-TR',{day:'numeric',month:'short'}):saatYaz(t))}
+  // uzun boşlukta çizgiyi kes: veri yokken varmış gibi görünmesin
+  const bosluk=Math.max((D.aralik_sn||600)*3.5,G.kova_sn*3.5);
+  let yol='',onceki=null;
+  for(const n of p){yol+=(onceki==null||n.ts-onceki>bosluk?'M':'L')+X(n.ts).toFixed(1)+' '+Y(n[ad]).toFixed(1);onceki=n.ts}
+  el('path',{class:'cizgi',d:yol});
+  const s=p[p.length-1];
+  el('circle',{class:'nokta',cx:X(s.ts),cy:Y(s[ad]),r:4.5});
+  el('text',{x:Math.min(X(s.ts)+9,W-sag+9),y:Y(s[ad])+4},sr.fmt(s[ad]));
+  const v=p.map(n=>n[ad]);
+  $('alt-'+ad).textContent='En az '+sr.fmt(Math.min(...v))+' · en çok '+sr.fmt(Math.max(...v));
+  const dik=el('line',{class:'dikey gizli',y1:ust,y2:H-alt}),im=el('circle',{class:'nokta gizli',r:4.5});
+  const ip=document.createElement('div');ip.className='ipucu gizli';kap.appendChild(ip);
+  const hareket=e=>{
+    const r=svg.getBoundingClientRect(),x=(e.clientX-r.left)*W/r.width;
+    const t=G.bas+(x-sol)/(W-sol-sag)*(G.bit-G.bas);
+    let n=p[0];for(const q of p)if(Math.abs(q.ts-t)<Math.abs(n.ts-t))n=q;
+    const nx=X(n.ts);
+    dik.setAttribute('x1',nx);dik.setAttribute('x2',nx);dik.classList.remove('gizli');
+    im.setAttribute('cx',nx);im.setAttribute('cy',Y(n[ad]));im.classList.remove('gizli');
+    ip.textContent='';const b=document.createElement('b');b.textContent=sr.fmt(n[ad]);const sp=document.createElement('span');sp.textContent=saatYaz(n.ts,true);ip.append(b,sp);
+    ip.classList.remove('gizli');
+    const gen=ip.offsetWidth,px=nx*r.width/W;ip.style.left=Math.max(0,Math.min(r.width-gen,px>r.width/2?px-gen-10:px+10))+'px';
+  };
+  const cik=()=>{dik.classList.add('gizli');im.classList.add('gizli');ip.classList.add('gizli')};
+  svg.addEventListener('pointermove',hareket);svg.addEventListener('pointerdown',hareket);svg.addEventListener('pointerleave',cik);
+}
+function grafikler(){if(G)['nem','pil','rssi'].forEach(grafik)}
+
+async function tablo(){
+  const l=await json(A()+'/olcumler?adet=50'),t=$('tablo');t.textContent='';
+  for(const r of l){const tr=document.createElement('tr');
+    [saatYaz(r.ts,true),yuzde(r.nem),r.ham==null?'–':say(r.ham,3)+' V',r.pil==null?'–':say(r.pil,2)+' V',r.rssi==null?'–':say(r.rssi)+' dBm',r.baglanma==null?'–':say(r.baglanma)+' ms',r.son_hata||'–'].forEach(v=>{const td=document.createElement('td');td.textContent=v;tr.appendChild(td)});
+    t.appendChild(tr)}
+}
+async function yenile(){
+  if(!ID)return listeYenile();
+  try{
+    [D,G]=await Promise.all([json(A()+'/durum'),json(A()+'/gecmis?saat='+saat)]);
+    durumCiz();grafikler();if($('tabloAc').open)await tablo();
+    if($('hata').dataset.baglanti){$('hata').textContent='';delete $('hata').dataset.baglanti}
+  }catch(e){$('hata').textContent='Sunucuya ulaşılamıyor.';$('hata').dataset.baglanti='1'}
+}
+$('secim').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;saat=+b.dataset.saat;
+  document.querySelectorAll('#secim button').forEach(x=>x.setAttribute('aria-pressed',x==b));yenile()});
+$('tabloAc').addEventListener('toggle',()=>{if($('tabloAc').open)tablo().catch(()=>{})});
+addEventListener('resize',grafikler);
+
+$('dosya').addEventListener('change',async e=>{
+  const f=e.target.files[0];e.target.value='';if(!f)return;
+  $('hata').textContent='';$('fotoEtiket').textContent='Yükleniyor…';
+  try{
+    let bmp;try{bmp=await createImageBitmap(f,{imageOrientation:'from-image'})}catch(_){throw new Error('Bu tarayıcı dosyayı açamadı. JPEG ya da PNG deneyin (iPhone HEIC dosyası olabilir).')}
+    const k=Math.min(1,1600/Math.max(bmp.width,bmp.height)),c=document.createElement('canvas');
+    c.width=Math.round(bmp.width*k);c.height=Math.round(bmp.height*k);c.getContext('2d').drawImage(bmp,0,0,c.width,c.height);
+    // PNG ve WebP saydam olabilir: JPEG'e çevirmek arka planı siyah yapar
+    const tur=/png|webp|gif/i.test(f.type)?'image/png':'image/jpeg';
+    const blob=await new Promise(r=>c.toBlob(r,tur,.86));
+    const r=await fetch(A()+'/foto',{method:'PUT',headers:{'Content-Type':tur},body:blob});
+    if(!r.ok)throw new Error('Fotoğraf kaydedilemedi ('+r.status+').');
+    await yenile();
+  }catch(x){$('hata').textContent=x.message;durumCiz()}
+});
+const acikForm=ac=>{$('acikForm').classList.toggle('gizli',!ac);$('acikGoster').classList.toggle('gizli',ac)};
+$('acikDuzenle').addEventListener('click',()=>{$('acikAlan').value=D.aciklama||'';acikForm(true);$('acikAlan').focus()});
+$('acikVazgec').addEventListener('click',()=>acikForm(false));
+$('acikKaydet').addEventListener('click',async()=>{
+  try{const r=await fetch(A()+'/aciklama',{method:'PUT',body:$('acikAlan').value});if(!r.ok)throw 0;acikForm(false);await yenile()}
+  catch(_){$('hata').textContent='Açıklama kaydedilemedi.'}
+});
+$('ayarAnahtar').addEventListener('change',async e=>{
+  const k=e.target;k.disabled=true;$('hata').textContent='';
+  try{const r=await fetch(A()+'/ayar-modu',{method:'PUT',body:k.checked?'ON':'OFF'});if(!r.ok)throw 0;await new Promise(x=>setTimeout(x,400));await yenile()}
+  catch(_){$('hata').textContent='Sunucu modu ayarlanamadı.';await yenile()}
+  k.disabled=false;
+});
+$('bilgiSaat').addEventListener('input',e=>{e.target.dataset.degisti='1'});
+$('bilgiKaydet').addEventListener('click',async()=>{
+  const g=$('bilgiSaat'),v=Math.round(+g.value),u=$('bilgiDurum'),b=D.bilgi_araligi;
+  $('hata').textContent='';
+  if(!(v>=b.en_az&&v<=b.en_cok)){u.textContent='';$('hata').textContent='Aralık '+b.en_az+' ile '+b.en_cok+' saat arasında olmalı.';return}
+  try{const r=await fetch(A()+'/bilgi-araligi',{method:'PUT',body:String(v)});if(!r.ok)throw 0;
+    delete g.dataset.degisti;u.textContent='Kaydedildi · sonraki uyanıştan sonra geçerli';u.dataset.kalici='1';
+    setTimeout(()=>{delete u.dataset.kalici},8000);await yenile()}
+  catch(_){$('hata').textContent='Aralık kaydedilemedi.'}
+});
+$('fotoSil').addEventListener('click',async()=>{if(!confirm('Fotoğraf kaldırılsın mı?'))return;await fetch(A()+'/foto',{method:'DELETE'});$('fotoImg').dataset.v='';yenile()});
+function yonlendir(){
+  const m=location.hash.match(/^#\/sensor\/(.+)$/);
+  ID=m?decodeURIComponent(m[1]):null;D=G=null;
+  $('liste').classList.toggle('gizli',!!ID);$('detay').classList.toggle('gizli',!ID);
+  if(!ID)document.title='Plant Panel';
+  acikForm(false);delete $('bilgiSaat').dataset.degisti;$('fotoImg').dataset.v='';$('fotoImg').removeAttribute('src');$('tablo').textContent='';scrollTo(0,0);
+  yenile();
+}
+addEventListener('hashchange',yonlendir);
+yonlendir();setInterval(yenile,30000);
+</script>
+</body>
+</html>

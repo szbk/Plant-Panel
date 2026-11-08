@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Toprak Sensörü</title>
+<style>
+:root{--bg:#f4f1ea;--kart:#fffdf8;--yazi:#2b2a26;--soluk:#7a766c;--cizgi:#e4ded1;--yesil:#3f7d4e;--yesil2:#e3efe4;--kirmizi:#b4442f;--kirmizi2:#f6e1db;--sari:#a7781b;--sari2:#f5ead2;--r:14px}
+@media (prefers-color-scheme:dark){:root{--bg:#1b1c19;--kart:#24261f;--yazi:#ecebe4;--soluk:#a3a196;--cizgi:#37392f;--yesil:#7cc08b;--yesil2:#26372a;--kirmizi:#e2806b;--kirmizi2:#3d2722;--sari:#e0b45a;--sari2:#3a3120}}
+*{box-sizing:border-box}
+body{margin:0;font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--yazi)}
+header{padding:20px 16px 8px;max-width:720px;margin:auto}
+h1{font-size:22px;margin:0 0 2px;letter-spacing:-.01em}
+.alt{color:var(--soluk);font-size:13px}
+main{max-width:720px;margin:auto;padding:8px 12px 40px;display:grid;gap:12px}
+.kart{background:var(--kart);border:1px solid var(--cizgi);border-radius:var(--r);padding:16px}
+.kart h2{font-size:15px;margin:0 0 12px;display:flex;align-items:center;gap:8px}
+.kart h2 small{font-weight:400;color:var(--soluk);margin-left:auto;font-size:12px}
+.buyuk{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.deger{background:var(--bg);border-radius:10px;padding:10px 12px}
+.deger b{display:block;font-size:24px;font-weight:650;letter-spacing:-.02em}
+.deger span{color:var(--soluk);font-size:12px}
+.cubuk{height:6px;background:var(--cizgi);border-radius:4px;margin-top:6px;overflow:hidden}
+.cubuk i{display:block;height:100%;background:var(--yesil);width:0;transition:width .4s}
+.rozetler{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.rozet{font-size:12px;padding:3px 9px;border-radius:99px;background:var(--bg);color:var(--soluk)}
+.rozet.iyi{background:var(--yesil2);color:var(--yesil)}
+.rozet.kotu{background:var(--kirmizi2);color:var(--kirmizi)}
+.rozet.uyari{background:var(--sari2);color:var(--sari)}
+label{display:block;font-size:13px;color:var(--soluk);margin:10px 0 4px}
+input,select{width:100%;font:inherit;color:var(--yazi);background:var(--bg);border:1px solid var(--cizgi);border-radius:10px;padding:9px 11px}
+input:focus,select:focus{outline:2px solid var(--yesil);outline-offset:-1px}
+.satir{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+.satir3{display:grid;grid-template-columns:2fr 1fr;gap:0 10px}
+button{font:inherit;font-weight:600;border:0;border-radius:10px;padding:10px 14px;cursor:pointer;background:var(--yesil);color:#fff}
+button.ikincil{background:var(--bg);color:var(--yazi);border:1px solid var(--cizgi)}
+button.tehlike{background:var(--kirmizi2);color:var(--kirmizi)}
+button:disabled{opacity:.5;cursor:default}
+.dugmeler{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.not{font-size:12.5px;color:var(--soluk);margin:8px 0 0}
+.mesaj{font-size:13px;margin-top:10px;min-height:1em}
+.mesaj.iyi{color:var(--yesil)}.mesaj.kotu{color:var(--kirmizi)}
+.agler{margin-top:8px;display:grid;gap:4px;max-height:220px;overflow:auto}
+.ag{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:9px;background:var(--bg);cursor:pointer;font-size:14px}
+.ag:hover{outline:1px solid var(--yesil)}
+.ag .g{margin-left:auto;color:var(--soluk);font-size:12px}
+.anahtar{display:flex;gap:6px;background:var(--bg);border-radius:10px;padding:4px;margin-top:4px}
+.anahtar button{flex:1;background:transparent;color:var(--soluk);font-weight:500;padding:7px}
+.anahtar button.secili{background:var(--kart);color:var(--yazi);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.gizli{display:none}
+.kal{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+details summary{cursor:pointer;color:var(--soluk);font-size:13px;margin-top:10px}
+.ust{display:flex;align-items:flex-end;justify-content:space-between;gap:10px}
+.sure{font-size:12px;color:var(--soluk);text-align:right}
+.adimlar{display:flex;gap:6px;margin:4px 0 14px}
+.adimlar i{flex:1;height:4px;border-radius:3px;background:var(--cizgi)}
+.adimlar i.tamam{background:var(--yesil)}
+.secenek{display:grid;gap:8px}
+.secenek label{display:flex;gap:10px;align-items:flex-start;margin:0;padding:12px;border:1px solid var(--cizgi);border-radius:11px;cursor:pointer;color:var(--yazi);font-size:14px}
+.secenek label:has(input:checked){border-color:var(--yesil);background:var(--yesil2)}
+.secenek input{width:auto;margin-top:3px;accent-color:var(--yesil)}
+.secenek small{display:block;color:var(--soluk);font-size:12.5px;margin-top:2px}
+.canli{display:flex;align-items:center;gap:12px;background:var(--bg);border-radius:11px;padding:12px 14px;margin-top:12px}
+.canli b{font-size:28px;font-weight:650;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.canli .sag{margin-left:auto;text-align:right;font-size:12px;color:var(--soluk)}
+ol.yonerge{margin:0;padding-left:20px;font-size:14px}
+ol.yonerge li{margin:3px 0}
+table.ozet{width:100%;border-collapse:collapse;font-size:14px;margin-top:6px;font-variant-numeric:tabular-nums}
+table.ozet td,table.ozet th{padding:7px 6px;border-bottom:1px solid var(--cizgi);text-align:right}
+table.ozet td:first-child,table.ozet th:first-child{text-align:left;color:var(--soluk);font-weight:400}
+table.ozet th{font-size:12px;color:var(--soluk);font-weight:500}
+.kucuk{display:grid;grid-template-columns:repeat(auto-fit,minmax(105px,1fr));gap:8px}
+.kucuk .deger b{font-size:19px}
+.kucuk .deger.uyari b{color:var(--sari)}.kucuk .deger.kotu b{color:var(--kirmizi)}
+.grafik{width:100%;height:170px;display:block;margin-top:10px}
+.grafik text{fill:var(--soluk);font-size:10px;font-family:inherit}
+.grafik .izgara{stroke:var(--cizgi);stroke-width:1}
+.grafik .cizgi{fill:none;stroke:var(--yesil);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+.grafik .alan{fill:var(--yesil);opacity:.12}
+.grafik .nokta{fill:var(--yesil)}
+.ilerleme{height:8px;background:var(--cizgi);border-radius:5px;overflow:hidden;margin-top:10px}
+.ilerleme i{display:block;height:100%;width:0;background:var(--yesil);transition:width .2s}
+</style>
+</head>
+<body>
+<header class="ust">
+  <div><h1 id="baslik">🌱 Toprak Sensörü</h1><div class="alt" id="altbaslik">Bağlanıyor…</div></div>
+  <div class="sure" id="sure"></div>
+</header>
+<main>
+
+<section class="kart">
+  <h2>Durum <small id="guncel"></small></h2>
+  <div class="buyuk">
+    <div class="deger"><span>Toprak nemi</span><b id="nem">–</b><div class="cubuk"><i id="nemCubuk"></i></div></div>
+    <div class="deger"><span>Pil</span><b id="pil">–</b><div class="cubuk"><i id="pilCubuk"></i></div></div>
+    <div class="deger"><span>WiFi sinyali</span><b id="rssi">–</b><span id="ssidBilgi"></span></div>
+  </div>
+  <div class="rozetler" id="rozetler"></div>
+  <details><summary>Ayrıntılar</summary><div class="not" id="ayrinti"></div></details>
+  <div class="dugmeler"><button class="ikincil" onclick="cagir('olc')">Şimdi ölç</button></div>
+</section>
+
+<section class="kart">
+  <h2>Canlı grafik <small id="grafikBilgi"></small></h2>
+  <div class="anahtar" id="seriler"><button data-s="nem" class="secili">Nem %</button><button data-s="ham_v">Ham V</button><button data-s="pil_v">Pil V</button><button data-s="rssi">Sinyal</button></div>
+  <svg class="grafik" id="grafik"></svg>
+  <p class="not">Sayfa açıkken 3 sn'de bir toplanır, en fazla son 10 dakika gösterilir. Cihazda saklanmaz.</p>
+</section>
+
+<section class="kart">
+  <h2>Teşhis <small>son güç kesintisinden beri</small></h2>
+  <div class="kucuk" id="teshis"></div>
+  <details><summary>Bu değerler ne anlama geliyor?</summary><p class="not">
+    <b>Kaçırılan:</b> son başarılı gönderimden beri veri gidemeyen uyanış. <b>Toplam hata / Kopma:</b> açılıştan beri.
+    <b>Son hata:</b> WiFi = ağa bağlanamadı, MQTT = ağ var ama sunucuya bağlanamadı, Kopma = gönderirken bağlantı koptu,
+    Teslim = sunucu onayı gelmedi. <b>WiFi ardışık</b> 3 olunca kurulum ağı açılır. <b>Hızlı deneme:</b> hata sonrası 5 dk'lık yeniden denemeler.
+    Sayaçlar pil/USB çıkarılınca sıfırlanır.</p></details>
+  <div class="dugmeler"><button class="ikincil" onclick="teshisSifirla()">Sayaçları sıfırla</button></div>
+  <div class="mesaj" id="teshisMesaj"></div>
+</section>
+
+<section class="kart">
+  <h2>🪴 Bitki</h2>
+  <div class="satir">
+    <div><label>Bitki adı</label><input id="bitki_ad" maxlength="40" placeholder="ör. Difenbahya" autocomplete="off"></div>
+    <div><label>Tür (bilimsel ad, isteğe bağlı)</label><input id="bitki_tur" maxlength="64" placeholder="ör. Dieffenbachia seguine" autocomplete="off"></div>
+  </div>
+  <p class="not">Home Assistant'a <b>Bitki</b> ve <b>Bitki Türü</b> olarak gider. Tür adı, bitkinin bakım değerlerini (OpenPlantbook) bulmak için kullanılacak.</p>
+  <div class="dugmeler"><button onclick="kaydetBitki()">Kaydet</button></div>
+  <div class="mesaj" id="bitkiMesaj"></div>
+</section>
+
+<section class="kart">
+  <h2>WiFi</h2>
+  <label>Ağ adı (SSID)</label>
+  <input id="ssid" autocomplete="off">
+  <div class="dugmeler" style="margin-top:8px"><button class="ikincil" id="taraBtn" onclick="tara()">Ağları tara</button></div>
+  <div class="agler" id="agler"></div>
+  <div id="decoAlan" class="gizli">
+    <label>Bu ağı yayınlayan erişim noktaları</label>
+    <div class="agler" id="decolar"></div>
+    <p class="not">Sensörün yanındayken sinyali en güçlü olan erişim noktasını seç. Şifre ve IP aynı kalır. Cihaz 45 sn içinde sunucuya ulaşamazsa eski ayara kendiliğinden döner.</p>
+  </div>
+  <label>Şifre</label>
+  <input id="sifre" type="password" autocomplete="new-password" placeholder="Değiştirmeyeceksen boş bırak">
+  <label>IP adresi</label>
+  <div class="anahtar"><button id="dhcpBtn" onclick="ipMod(1)">Otomatik (DHCP)</button><button id="sabitBtn" onclick="ipMod(0)">Sabit IP</button></div>
+  <div id="sabitAlan">
+    <div class="satir"><div><label>IP</label><input id="ip" inputmode="decimal"></div><div><label>Ağ geçidi</label><input id="gw" inputmode="decimal"></div></div>
+    <div class="satir"><div><label>Alt ağ maskesi</label><input id="mask" inputmode="decimal"></div><div><label>DNS</label><input id="dns" inputmode="decimal"></div></div>
+    <p class="not">Sabit IP her uyanışı yaklaşık 0,5 sn kısaltır (pil). Modemin otomatik dağıttığı aralığın <b>dışında</b> bir adres seç.</p>
+  </div>
+  <div class="dugmeler"><button onclick="kaydetWifi()">Kaydet ve yeniden başlat</button><button class="ikincil" onclick="mevcutIp()">Şu anki IP'yi sabitle</button><button class="ikincil" id="varsBtn" onclick="wifiVarsayilan()">Yazılımdaki ağa dön</button></div>
+  <div class="mesaj" id="wifiMesaj"></div>
+  <div class="mesaj kotu" id="wifiUyari"></div>
+</section>
+
+<section class="kart">
+  <h2>MQTT <small id="mqttDurum"></small></h2>
+  <div class="satir3"><div><label>Sunucu</label><input id="mqtt_host" placeholder="ör. 192.168.1.10 ya da homeassistant.local"></div><div><label>Port</label><input id="mqtt_port" inputmode="numeric"></div></div>
+  <div class="satir"><div><label>Kullanıcı adı</label><input id="mqtt_user" autocomplete="off"></div><div><label>Şifre</label><input id="mqtt_pass" type="password" autocomplete="new-password" placeholder="Değiştirmeyeceksen boş"></div></div>
+  <p class="not" id="mqttNot"></p>
+  <div class="dugmeler"><button onclick="kaydetMqtt()">Kaydet ve bağlan</button></div>
+  <div class="mesaj" id="mqttMesaj"></div>
+</section>
+
+<section class="kart">
+  <h2>Ölçüm</h2>
+  <div class="satir">
+    <div><label>Ölçüm aralığı</label><select id="uyku_dk"><option value="5">5 dakika</option><option value="10">10 dakika</option><option value="15">15 dakika</option><option value="30">30 dakika</option><option value="60">1 saat</option><option value="120">2 saat</option><option value="240">4 saat</option></select></div>
+    <div><label>Düşük pil eşiği (V)</label><input id="pil_kesim" inputmode="decimal"></div>
+  </div>
+  <p class="not">Pil bu voltajın altına düşünce sensör WiFi açmadan 24 saat uyur (pili korur). Aralık uzadıkça pil ömrü artar.</p>
+  <div class="dugmeler"><button onclick="kaydetOlcum()">Kaydet</button></div>
+  <div class="mesaj" id="olcumMesaj"></div>
+</section>
+
+<section class="kart">
+  <h2>Kalibrasyon</h2>
+  <div class="kal">
+    <div class="deger"><span>Kuru · %0</span><b id="kuru">–</b></div>
+    <div class="deger"><span>Islak · %100</span><b id="islak">–</b></div>
+  </div>
+  <div id="sb" class="gizli"></div>
+  <div class="dugmeler" id="sbBaslat"><button onclick="sbBasla()">Kalibrasyon sihirbazı</button></div>
+  <details id="elleKal"><summary>Elle gir</summary>
+    <div class="satir"><div><label>Kuru (V)</label><input id="kuru_v" inputmode="decimal"></div><div><label>Islak (V)</label><input id="islak_v" inputmode="decimal"></div></div>
+    <div class="dugmeler"><button onclick="kaydetKal()">Kaydet</button></div>
+  </details>
+  <div class="mesaj" id="kalMesaj"></div>
+</section>
+
+<section class="kart">
+  <h2>Bakım</h2>
+  <label>Yazılım güncelle (.bin / .ota.bin)</label>
+  <input type="file" id="dosya" accept=".bin">
+  <div class="ilerleme gizli" id="otaCubukKap"><i id="otaCubuk"></i></div>
+  <div class="dugmeler"><button class="ikincil" id="otaBtn" onclick="guncelle()">Yükle</button></div>
+  <div class="mesaj" id="otaMesaj"></div>
+  <p class="not">ESPHome derlemesindeki <b>firmware.ota.bin</b> dosyasını seç. Yükleme sonrası cihaz yeniden başlar ve ayar modunda açılır.</p>
+  <div class="dugmeler">
+    <button onclick="cik()">Kaydet ve çık (uykuya dön)</button>
+    <button class="ikincil" onclick="yenidenBaslat()">Yeniden başlat</button>
+    <button class="tehlike" onclick="fabrika()">Fabrika ayarları</button>
+  </div>
+  <div class="mesaj" id="bakimMesaj"></div>
+</section>
+
+</main>
+<script>
+const $=id=>document.getElementById(id);
+let A={},D={},dhcp=1;
+function msg(id,t,iyi){const e=$(id);e.textContent=t;e.className='mesaj '+(iyi===true?'iyi':iyi===false?'kotu':'')}
+async function api(yol,veri){
+  const o=veri?{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams(veri)}:{};
+  const r=await fetch('/api/'+yol,o);let j={};try{j=await r.json()}catch(e){}
+  if(!r.ok)throw new Error(j.hata||('HTTP '+r.status));return j}
+const cagir=y=>api(y,{}).catch(e=>console.log(e));
+function sinyal(r){return r>=-55?'Çok iyi':r>=-67?'İyi':r>=-75?'Zayıf':'Çok zayıf'}
+function sure(s){s=Math.round(s);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')}
+function rozet(t,c){return '<span class="rozet '+(c||'')+'">'+t+'</span>'}
+async function durum(){
+  try{D=await api('durum')}catch(e){$('altbaslik').textContent='Bağlantı yok…';return}
+  $('altbaslik').textContent=(D.wifi_bagli?D.ip:(D.ap?'Kurulum ağı · '+D.ap_ip:'Ağa bağlı değil'))+' · '+D.mac;
+  $('sure').innerHTML='Ayar modu<br><b>'+sure(D.kalan_sn)+'</b> sonra uyur';
+  $('nem').textContent=D.nem==null?'–':D.nem+'%';$('nemCubuk').style.width=(D.nem||0)+'%';
+  $('pil').textContent=D.pil_v==null?'–':D.pil_v.toFixed(2)+' V';$('pilCubuk').style.width=(D.pil_yuzde||0)+'%';
+  $('pilCubuk').style.background=D.pil_yuzde<20?'var(--kirmizi)':'var(--yesil)';
+  $('rssi').textContent=D.wifi_bagli?D.rssi+' dBm':'–';$('ssidBilgi').textContent=D.wifi_bagli?D.ssid+' · '+sinyal(D.rssi):'';
+  $('rozetler').innerHTML=rozet(D.wifi_bagli?'WiFi bağlı':'WiFi yok',D.wifi_bagli?'iyi':'kotu')+rozet(D.mqtt_bagli?'MQTT bağlı':'MQTT yok',D.mqtt_bagli?'iyi':'kotu')+(D.ap?rozet('Kurulum ağı açık','uyari'):'')+rozet('Pil %'+(D.pil_yuzde??'–'),D.pil_yuzde<20?'kotu':'')+(D.son_hata!='Yok'?rozet('Son hata: '+D.son_hata,'uyari'):'');
+  $('ayrinti').innerHTML='Ham sensör: '+(D.ham_v??'–')+' V · Kanal '+(D.kanal??'–')+'<br>Erişim noktası: '+(D.bssid||'–')+(D.deco_sabit?' (seçilmiş)':'')+'<br>Yazılım: '+D.derleme;
+  teshisCiz();grafikEkle();
+  $('wifiUyari').textContent=D.wifi_geri_alindi?'Son kaydedilen ağa 45 sn içinde bağlanılamadı; eski ayarlara geri dönüldü. Ağ adını ve şifreyi kontrol edip tekrar dene.':
+    D.wifi_varsayilan?'Kayıtlı ağa art arda bağlanılamadı; bu uyanışta yazılımdaki varsayılan ağ kullanılıyor. Kayıtlı ağ ayarlarını kontrol et.':'';
+  $('mqttDurum').innerHTML=D.mqtt_bagli?rozet('bağlı','iyi'):rozet('bağlı değil','kotu');
+  $('guncel').textContent=new Date().toLocaleTimeString('tr-TR');
+}
+function teshisCiz(){
+  const k=(ad,v,c)=>'<div class="deger '+(c||'')+'"><span>'+ad+'</span><b>'+v+'</b></div>';
+  $('teshis').innerHTML=k('Uyanış',D.dongu)+k('Kaçırılan',D.kacirilan,D.kacirilan?'uyari':'')+k('Toplam hata',D.toplam_hata,D.toplam_hata?'uyari':'')+
+    k('Kopma',D.kopma,D.kopma?'uyari':'')+k('Son hata',D.son_hata,D.son_hata!='Yok'?'kotu':'')+
+    k('Önceki uyanık',D.onceki_uyanik!=null?(D.onceki_uyanik/1000).toFixed(1).replace('.',',')+' sn':'–')+
+    k('WiFi ardışık',D.wifi_ardisik??'–',D.wifi_ardisik?'uyari':'')+k('Hızlı deneme',D.hizli_deneme??'–');
+}
+async function teshisSifirla(){
+  if(!confirm('Kaçırılan, toplam hata, kopma ve son hata sayaçları sıfırlansın mı?'))return;
+  try{await api('teshis_sifirla',{});await BEKLE(400);await durum();msg('teshisMesaj','Sayaçlar sıfırlandı ✓',true)}catch(e){msg('teshisMesaj',e.message,false)}
+}
+/* ---------- canlı grafik: /api/durum yoklamalarından, tarayıcıda ---------- */
+const G=[],G_SURE=10*60*1000;let gSeri='nem';
+const SERI={nem:{ad:'Nem',b:'%',d:0,min:0,max:100},ham_v:{ad:'Ham',b:' V',d:3},pil_v:{ad:'Pil',b:' V',d:2},rssi:{ad:'Sinyal',b:' dBm',d:0}};
+function grafikEkle(){const t=Date.now();G.push({t,nem:D.nem,ham_v:D.ham_v,pil_v:D.pil_v,rssi:D.wifi_bagli?D.rssi:null});while(G.length&&t-G[0].t>G_SURE)G.shift();grafikCiz()}
+function grafikCiz(){
+  const svg=$('grafik'),sr=SERI[gSeri],W=svg.clientWidth||600,H=170,sl=42,ss=14,su=8,sa=20;
+  svg.setAttribute('viewBox','0 0 '+W+' '+H);
+  const p=G.filter(x=>x[gSeri]!=null);
+  if(p.length<2){svg.innerHTML='<text x="'+W/2+'" y="90" text-anchor="middle">Veri toplanıyor…</text>';$('grafikBilgi').textContent='';return}
+  let lo=Math.min(...p.map(x=>x[gSeri])),hi=Math.max(...p.map(x=>x[gSeri]));
+  if(sr.min!=null){lo=Math.min(lo,sr.min);hi=Math.max(hi,sr.max)}
+  if(hi-lo<1e-9){const m=gSeri=='ham_v'||gSeri=='pil_v'?0.05:2;lo-=m;hi+=m}else{const m=(hi-lo)*0.1;if(sr.min==null){lo-=m;hi+=m}}
+  // pencere: veri 10 dk'dan azsa ilk noktadan şimdiye (en az 1 dk), sonra kayan 10 dk
+  const simdi=Date.now(),pen=Math.max(60000,Math.min(G_SURE,simdi-p[0].t)),t0=simdi-pen;
+  const X=t=>sl+(t-t0)/pen*(W-sl-ss),Y=v=>su+(1-(v-lo)/(hi-lo))*(H-su-sa);
+  let h='';
+  for(let i=0;i<=3;i++){const v=lo+(hi-lo)*i/3,y=Y(v);h+='<line class="izgara" x1="'+sl+'" x2="'+(W-ss)+'" y1="'+y+'" y2="'+y+'"/><text x="'+(sl-6)+'" y="'+(y+3)+'" text-anchor="end">'+v.toFixed(sr.d)+'</text>'}
+  const etk=ms=>ms>=60000?'-'+Math.round(ms/60000)+' dk':'-'+Math.round(ms/1000)+' sn';
+  [[0,'start'],[0.5,'middle'],[1,'end']].forEach(([f,a])=>{const t=t0+pen*f;h+='<text x="'+X(t)+'" y="'+(H-5)+'" text-anchor="'+a+'">'+(f==1?'şimdi':etk(simdi-t))+'</text>'});
+  const pts=p.map(x=>X(x.t).toFixed(1)+','+Y(x[gSeri]).toFixed(1));
+  h+='<polygon class="alan" points="'+X(p[0].t).toFixed(1)+','+(H-sa)+' '+pts.join(' ')+' '+X(p[p.length-1].t).toFixed(1)+','+(H-sa)+'"/>';
+  h+='<polyline class="cizgi" points="'+pts.join(' ')+'"/>';
+  const s=p[p.length-1];h+='<circle class="nokta" r="3.5" cx="'+X(s.t)+'" cy="'+Y(s[gSeri])+'"/>';
+  svg.innerHTML=h;
+  const v=p.map(x=>x[gSeri]);
+  $('grafikBilgi').textContent=sr.ad+': '+(gSeri=='nem'?'%'+s[gSeri]:s[gSeri].toFixed(sr.d)+sr.b)+' · en az '+Math.min(...v).toFixed(sr.d)+' · en çok '+Math.max(...v).toFixed(sr.d);
+}
+addEventListener('resize',()=>grafikCiz());
+document.querySelectorAll('#seriler button').forEach(b=>b.onclick=()=>{gSeri=b.dataset.s;document.querySelectorAll('#seriler button').forEach(x=>x.className=x==b?'secili':'');grafikCiz()});
+function ipMod(m){dhcp=m;$('dhcpBtn').className=m?'secili':'';$('sabitBtn').className=m?'':'secili';$('sabitAlan').className=m?'gizli':''}
+async function ayarlar(){
+  A=await api('ayarlar');
+  ['ssid','ip','gw','mask','dns','mqtt_host','mqtt_port','mqtt_user','pil_kesim','kuru_v','islak_v'].forEach(k=>{if(A[k]!=null)$(k).value=A[k]});
+  $('uyku_dk').value=String(A.uyku_dk);if($('uyku_dk').value!=String(A.uyku_dk)){const o=new Option(A.uyku_dk+' dakika',A.uyku_dk);$('uyku_dk').add(o);$('uyku_dk').value=String(A.uyku_dk)}
+  ipMod(A.dhcp?1:0);
+  $('varsBtn').style.display=A.ozel_wifi?'':'none';
+  $('sifre').placeholder=A.sifre_var?'Kayıtlı · değiştirmeyeceksen boş bırak':'Şifresiz ağ';
+  $('mqtt_pass').placeholder=A.mqtt_sifre_var?'Kayıtlı · değiştirmeyeceksen boş':'Yok';
+  $('mqttNot').textContent=A.ozel_mqtt?'':'Şu an yazılıma gömülü varsayılan sunucu kullanılıyor. Home Assistant için onun IP adresini, Mosquitto kullanıcı adını ve şifresini gir.';
+  $('kuru').textContent=A.kuru_v.toFixed(3)+' V';$('islak').textContent=A.islak_v.toFixed(3)+' V';
+  $('bitki_ad').value=A.bitki_ad||'';$('bitki_tur').value=A.bitki_tur||'';
+  $('baslik').textContent='🌱 '+(A.bitki_ad||'Toprak Sensörü');document.title=(A.bitki_ad?A.bitki_ad+' · ':'')+'Toprak Sensörü';
+}
+async function kaydetBitki(){
+  const ad=$('bitki_ad').value.trim(),tur=$('bitki_tur').value.trim();
+  try{await api('ayarlar',{bitki_ad:ad,bitki_tur:tur});await new Promise(r=>setTimeout(r,500));await ayarlar();msg('bitkiMesaj',ad?'Kaydedildi ✓ (MQTT\'ye gönderildi)':'Bitki adı silindi',true)}catch(e){msg('bitkiMesaj',e.message,false)}
+}
+async function tara(){
+  $('taraBtn').disabled=true;$('agler').innerHTML='<div class="not">Taranıyor…</div>';
+  await cagir('tara');
+  for(let i=0;i<6;i++){await new Promise(r=>setTimeout(r,1500));const l=await api('agler').catch(()=>[]);if(l.length){goster(l);decoGoster(l)}}
+  $('taraBtn').disabled=false;
+  if(!$('agler').children.length||$('agler').textContent=='Taranıyor…')$('agler').innerHTML='<div class="not">Ağ bulunamadı. Tekrar dene ya da adı elle yaz.</div>';
+}
+function goster(l){
+  const g={};l.forEach(a=>{if(!g[a.ssid]||g[a.ssid].rssi<a.rssi)g[a.ssid]=a});
+  $('agler').innerHTML='';Object.values(g).sort((a,b)=>b.rssi-a.rssi).forEach(a=>{
+    const d=document.createElement('div');d.className='ag';d.innerHTML=(a.kilit?'🔒':'🔓')+' <span></span><span class="g">'+sinyal(a.rssi)+' · k'+a.kanal+'</span>';
+    d.children[0].textContent=a.ssid;d.onclick=()=>{$('ssid').value=a.ssid;$('sifre').focus()};$('agler').appendChild(d)})
+}
+async function wifiVarsayilan(){if(!confirm('Kayıtlı WiFi ayarı silinsin ve yazılımdaki ağ ayarları kullanılsın mı?'))return;
+  try{await api('wifi_varsayilan',{});msg('wifiMesaj','Yazılımdaki ağa dönülüyor, cihaz yeniden başlıyor. Sayfa birkaç saniye sonra yazılımdaki sabit IP adresinde açılır.',true);setTimeout(()=>location.reload(),9000)}catch(e){msg('wifiMesaj',e.message,false)}}
+function decoGoster(l){
+  const ad=D.ssid||$('ssid').value,k=$('decolar'),liste=l.filter(a=>a.ssid==ad).sort((a,b)=>b.rssi-a.rssi);
+  $('decoAlan').className=liste.length?'':'gizli';k.innerHTML='';
+  liste.forEach((a,i)=>{const bagli=a.bssid==D.bssid,d=document.createElement('div');d.className='ag';
+    d.innerHTML='<span></span><span class="g"></span>';d.children[0].textContent=a.bssid+(i==0?' · en güçlü':'');
+    d.children[1].textContent=a.rssi+' dBm · '+sinyal(a.rssi)+' · k'+a.kanal+(bagli?' · bağlı':'');
+    if(bagli)d.style.cursor='default';else d.onclick=()=>decoSec(a);k.appendChild(d)})
+}
+async function decoSec(a){
+  if(!confirm(a.bssid+' adresli erişim noktasına ('+a.rssi+' dBm) geçilsin mi? Cihaz yeniden başlayacak.'))return;
+  try{await api('deco_sec',{bssid:a.bssid,kanal:a.kanal})}catch(e){msg('wifiMesaj',e.message,false);return}
+  msg('wifiMesaj','Cihaz yeniden başlıyor ve bu erişim noktası deneniyor. En çok 1,5 dakika sürer, sayfayı kapatma.');
+  await BEKLE(14000);
+  for(let i=0;i<40;i++){
+    await BEKLE(2000);
+    try{const d=await api('durum');D=d;
+      if(d.wifi_geri_alindi){msg('wifiMesaj','Bu erişim noktası üzerinden sunucuya ulaşılamadı; eski ayara dönüldü.',false);return}
+      if(d.bssid==a.bssid&&d.mqtt_bagli&&!d.wifi_deneme){msg('wifiMesaj','Bağlandı ✓ '+d.rssi+' dBm ('+sinyal(d.rssi)+')',true);ayarlar().catch(()=>{});return}
+    }catch(e){}
+  }
+  msg('wifiMesaj','Cihazdan cevap alınamadı. Sayfayı yenile; olmazsa BOOT tuşuna basıp yeniden dene.',false);
+}
+function mevcutIp(){if(!D.wifi_bagli){msg('wifiMesaj','Önce ağa bağlı olmalı.',false);return}ipMod(0);$('ip').value=D.ip;msg('wifiMesaj','Ağ geçidi, maske ve DNS alanlarını kontrol edip kaydet.')}
+async function kaydetWifi(){
+  const v={ssid:$('ssid').value.trim(),sifre:$('sifre').value,dhcp:dhcp,ip:$('ip').value.trim(),gw:$('gw').value.trim(),mask:$('mask').value.trim(),dns:$('dns').value.trim()};
+  if(!v.ssid){msg('wifiMesaj','Ağ adı boş olamaz.',false);return}
+  try{await api('ayarlar',v);msg('wifiMesaj','Kaydedildi. Cihaz yeniden başlayıp yeni ağı deneyecek; ayar modu açık kalır. Bağlanırsa sayfaya '+(dhcp?'yeni IP adresinden (modemin cihaz listesine bak)':'http://'+v.ip+'/ adresinden')+' gir. 45 sn içinde bağlanamazsa eski ayarlara kendiliğinden döner ve bu adreste tekrar açılır.',true);
+    setTimeout(()=>cagir('yeniden_baslat'),600)}catch(e){msg('wifiMesaj',e.message,false)}
+}
+async function kaydetMqtt(){
+  const v={mqtt_host:$('mqtt_host').value.trim(),mqtt_port:$('mqtt_port').value.trim()||'1883',mqtt_user:$('mqtt_user').value.trim(),mqtt_pass:$('mqtt_pass').value};
+  try{await api('ayarlar',v);await cagir('mqtt_test');msg('mqttMesaj','Kaydedildi, bağlanılıyor… (10-20 sn sürebilir)');
+    for(let i=0;i<25;i++){await new Promise(r=>setTimeout(r,1000));await durum();if(D.mqtt_bagli){msg('mqttMesaj','Bağlandı ✓',true);ayarlar();return}}
+    msg('mqttMesaj','Bağlanamadı. Adresi, portu, kullanıcı adı ve şifreyi kontrol et.',false)}catch(e){msg('mqttMesaj',e.message,false)}
+}
+async function kaydetOlcum(){try{await api('ayarlar',{uyku_dk:$('uyku_dk').value,pil_kesim:$('pil_kesim').value.replace(',','.')});msg('olcumMesaj','Kaydedildi ✓',true);ayarlar()}catch(e){msg('olcumMesaj',e.message,false)}}
+/* ---------- Kalibrasyon sihirbazı ----------
+   Ölçümler tarayıcıda toplanır, cihaza sadece en sonda 'Kaydet' ile yazılır (yarıda kalırsa eski değerler korunur).
+   Canlı değer: /api/olc ölçümü tetikler, /api/durum okur (~1 sn'de bir). */
+const BEKLE=ms=>new Promise(r=>setTimeout(r,ms));
+const SB_BAGLI_DEGIL=0.8;      // bunun altı: sensör bağlı değil / besleme yok (havada ~2,5 V, suda ~1,1 V)
+const SB_SABIT=0.015;          // son okumaların yayılımı bundan küçükse 'sabit'
+let S=null,sbCanliCalisiyor=false;
+const YONTEM={
+  toprak:{ad:'Saksı toprağında',
+    kuru:['Sulama zamanı gelmiş (ya da kuru) toprağa sensörü <b>beyaz çizgiye kadar</b> it.','Sensörün etrafındaki toprağı hafifçe bastır, boşluk kalmasın.','Değer sabitlenene kadar bekle (10-20 sn), sonra <b>Ölç</b>.'],
+    islak:['Sensörü yerinden oynatmadan bitkiyi <b>bolca sula</b> (saksı altından su gelene kadar).','Fazla suyun süzülmesi için <b>10-15 dakika</b> bekle. Sayfa açık kaldıkça ayar modu kapanmaz.','Değer sabitlenince <b>Ölç</b>.']},
+  hava:{ad:'Hava ve su',
+    kuru:['Sensörü kurula, <b>havada</b> tut (hiçbir şeye değmesin, elini sensör yüzeyinden uzak tut).','Değer sabitlenince <b>Ölç</b>.'],
+    islak:['Sensörü bir bardak suya <b>beyaz çizgiye kadar</b> batır. Elektronik kısım ıslanmasın.','Değer sabitlenince <b>Ölç</b>.']}
+};
+function sbBasla(){S={adim:1,yontem:'toprak',kuru:null,islak:null,son:[],olcuyor:false};$('sbBaslat').className='gizli';$('elleKal').className='gizli';$('sb').className='';msg('kalMesaj','');sbCiz()}
+function sbKapat(){S=null;$('sb').className='gizli';$('sb').innerHTML='';$('sbBaslat').className='dugmeler';$('elleKal').className=''}
+function sbAdimCubugu(){return '<div class="adimlar">'+[1,2,3,4].map(i=>'<i class="'+(i<=S.adim?'tamam':'')+'"></i>').join('')+'</div>'}
+function sbCiz(){
+  const y=YONTEM[S.yontem];let h=sbAdimCubugu();
+  if(S.adim==1){
+    h+='<p class="not" style="margin-top:0">Adım 1/4 · Nasıl kalibre edelim?</p><div class="secenek">'+
+      '<label><input type="radio" name="yon" value="toprak" '+(S.yontem=='toprak'?'checked':'')+' onchange="S.yontem=this.value"><span><b>Saksı toprağında</b> (önerilen)<small>Kuru = sulama zamanı gelmiş toprak, ıslak = yeni sulanmış toprak. Yüzde değeri bitkinin gerçek durumunu gösterir.</small></span></label>'+
+      '<label><input type="radio" name="yon" value="hava" '+(S.yontem=='hava'?'checked':'')+' onchange="S.yontem=this.value"><span><b>Hava ve su</b> (hızlı)<small>Kuru = havada, ıslak = bardak suda. Toprakta nem hiçbir zaman %100\'e yaklaşmaz; değerler kaba olur.</small></span></label></div>'+
+      '<div class="dugmeler"><button onclick="sbGit(2)">Başla</button><button class="ikincil" onclick="sbKapat()">Vazgeç</button></div>';
+  }else if(S.adim==2||S.adim==3){
+    const kuru=S.adim==2,t=kuru?'kuru':'islak',v=S[t];
+    h+='<p class="not" style="margin-top:0">Adım '+S.adim+'/4 · '+(kuru?'Kuru':'Islak')+' ölçüm ('+y.ad.toLowerCase()+')</p>'+
+      '<ol class="yonerge">'+y[t].map(x=>'<li>'+x+'</li>').join('')+'</ol>'+
+      '<div class="canli"><div><span class="not" style="margin:0">Canlı sensör</span><br><b id="sbCanli">–</b></div><div class="sag"><span id="sbSabit"></span><br><span id="sbNot"></span></div></div>'+
+      (v?'<p class="mesaj iyi">'+(kuru?'Kuru':'Islak')+' ölçüldü: <b>'+v.v.toFixed(3)+' V</b> (±'+v.s.toFixed(3)+')</p>':'')+
+      '<div class="dugmeler"><button id="sbOlcBtn" onclick="sbOlc(\''+t+'\')">'+(v?'Tekrar ölç':'Ölç')+'</button>'+
+      (v?'<button onclick="sbGit('+(S.adim+1)+')">İleri</button>':'')+
+      '<button class="ikincil" onclick="sbGit('+(S.adim-1)+')">Geri</button></div><div class="mesaj" id="sbMesaj"></div>';
+  }else if(S.adim==4){
+    const k=S.kuru.v,i=S.islak.v,fark=k-i,ham=D.ham_v;
+    const yeni=ham==null?null:Math.max(0,Math.min(100,Math.round((k-ham)/(k-i)*100)));
+    const eski=D.nem;
+    h+='<p class="not" style="margin-top:0">Adım 4/4 · Kontrol et ve kaydet</p>'+
+      '<table class="ozet"><tr><th></th><th>Şu anki</th><th>Yeni</th></tr>'+
+      '<tr><td>Kuru (%0)</td><td>'+A.kuru_v.toFixed(3)+' V</td><td><b>'+k.toFixed(3)+' V</b></td></tr>'+
+      '<tr><td>Islak (%100)</td><td>'+A.islak_v.toFixed(3)+' V</td><td><b>'+i.toFixed(3)+' V</b></td></tr>'+
+      '<tr><td>Fark</td><td>'+(A.kuru_v-A.islak_v).toFixed(3)+' V</td><td>'+fark.toFixed(3)+' V</td></tr>'+
+      '<tr><td>Şu anki nem</td><td>'+(eski==null?'–':'%'+eski)+'</td><td>'+(yeni==null?'–':'%'+yeni)+'</td></tr></table>'+
+      (S.yontem=='toprak'?'<p class="not">Toprakta kalibre edildi: %0 = sulama zamanı, %100 = yeni sulanmış. Home Assistant\'ta sulama eşiğini buna göre (ör. %20-30) ayarla.</p>':'')+
+      '<div class="dugmeler"><button onclick="sbKaydet()">Kaydet</button><button class="ikincil" onclick="sbGit(3)">Geri</button><button class="ikincil" onclick="sbKapat()">Vazgeç</button></div><div class="mesaj" id="sbMesaj"></div>';
+  }
+  $('sb').innerHTML=h;
+  if((S.adim==2||S.adim==3)&&!sbCanliCalisiyor)sbCanli();
+}
+function sbGit(n){if(!S)return;if(n<1){sbKapat();return}S.adim=n;S.son=[];sbCiz()}
+async function sbOku(){await api('olc',{});await BEKLE(350);D=await api('durum');return D.ham_v}
+async function sbCanli(){
+  sbCanliCalisiyor=true;
+  try{
+    while(S&&(S.adim==2||S.adim==3)){
+      if(!S.olcuyor){
+        let v=null;try{v=await sbOku()}catch(e){}
+        if(!S||!(S.adim==2||S.adim==3))break;
+        const e=$('sbCanli');
+        if(e&&v!=null){
+          S.son.push(v);if(S.son.length>5)S.son.shift();
+          e.textContent=v.toFixed(3)+' V';
+          const yay=S.son.length>=3?Math.max(...S.son)-Math.min(...S.son):null;
+          $('sbSabit').innerHTML=v<SB_BAGLI_DEGIL?rozet('Sensör bağlı değil?','kotu'):yay==null?rozet('ölçülüyor…'):yay<SB_SABIT?rozet('Sabit','iyi'):rozet('Değişiyor','uyari');
+          $('sbNot').textContent=yay==null?'':'son '+S.son.length+' okuma ±'+(yay/2).toFixed(3);
+        }
+      }
+      await BEKLE(700);
+    }
+  }finally{sbCanliCalisiyor=false}
+}
+async function sbOlc(t){
+  if(S.olcuyor)return;S.olcuyor=true;const b=$('sbOlcBtn');if(b)b.disabled=true;
+  const l=[];
+  try{
+    for(let n=0;n<6;n++){msg('sbMesaj','Ölçülüyor… '+(n+1)+'/6');const v=await sbOku();if(v!=null)l.push(v);await BEKLE(400)}
+  }catch(e){msg('sbMesaj','Cihazla bağlantı koptu: '+e.message,false);S.olcuyor=false;if(b)b.disabled=false;return}
+  S.olcuyor=false;
+  if(l.length<4){msg('sbMesaj','Yeterli ölçüm alınamadı, tekrar dene.',false);if(b)b.disabled=false;return}
+  const ort=l.reduce((a,x)=>a+x,0)/l.length,yay=(Math.max(...l)-Math.min(...l))/2;
+  if(ort<SB_BAGLI_DEGIL){msg('sbMesaj','Değer çok düşük ('+ort.toFixed(3)+' V): sensör bağlı değil ya da beslemesi yok. Kabloyu kontrol et.',false);if(b)b.disabled=false;return}
+  if(yay>0.03){msg('sbMesaj','Değer oynuyor (±'+yay.toFixed(3)+' V). Biraz bekleyip tekrar ölç.',false);if(b)b.disabled=false;return}
+  const min=A.kal_min_fark||0.2;
+  if(t=='islak'&&S.kuru&&ort>S.kuru.v-min){msg('sbMesaj','Islak değer ('+ort.toFixed(3)+' V) kuruya ('+S.kuru.v.toFixed(3)+' V) çok yakın. Toprak yeterince ıslak değil ya da sensör yerinden oynadı. En az '+min.toFixed(2).replace('.',',')+' V fark gerekli.',false);if(b)b.disabled=false;return}
+  S[t]={v:ort,s:yay};sbCiz();
+}
+async function sbKaydet(){
+  try{await api('ayarlar',{kuru_v:S.kuru.v.toFixed(3),islak_v:S.islak.v.toFixed(3)});await BEKLE(500);await cagir('olc');await BEKLE(500);await ayarlar();await durum();
+    const y=S.yontem;sbKapat();msg('kalMesaj','Kalibrasyon kaydedildi ✓ ('+YONTEM[y].ad.toLowerCase()+')',true)}catch(e){msg('sbMesaj',e.message,false)}
+}
+async function kaydetKal(){try{await api('ayarlar',{kuru_v:$('kuru_v').value.replace(',','.'),islak_v:$('islak_v').value.replace(',','.')});msg('kalMesaj','Kaydedildi ✓',true);ayarlar()}catch(e){msg('kalMesaj',e.message,false)}}
+function guncelle(){
+  const f=$('dosya').files[0];
+  if(!f){msg('otaMesaj','Önce dosya seç.',false);return}
+  if(!/\.bin$/i.test(f.name)||f.size<100000){msg('otaMesaj','Bu bir yazılım dosyası gibi görünmüyor (.bin, en az 100 KB).',false);return}
+  if(!confirm(f.name+' ('+Math.round(f.size/1024)+' KB) yüklensin mi?'))return;
+  const eski=D.derleme;$('otaBtn').disabled=true;$('otaCubukKap').className='ilerleme';$('otaCubuk').style.width='0';
+  cagir('ayar_istek').then(()=>{
+    const fd=new FormData();fd.append('update',f,f.name);
+    const x=new XMLHttpRequest();x.open('POST','/update');
+    x.upload.onprogress=e=>{if(e.lengthComputable){const y=Math.round(e.loaded/e.total*100);$('otaCubuk').style.width=y+'%';msg('otaMesaj','Yükleniyor… %'+y+' · sayfayı kapatma')}};
+    x.onload=()=>{if(x.status==200&&/success/i.test(x.responseText)){$('otaCubuk').style.width='100%';msg('otaMesaj','Yüklendi, cihaz yeniden başlıyor…');yeniYazilimiBekle(eski)}
+      else{msg('otaMesaj','Yükleme başarısız: '+(x.responseText||('HTTP '+x.status)).slice(0,200),false);$('otaBtn').disabled=false}};
+    x.onerror=()=>{msg('otaMesaj','Bağlantı koptu. Cihaz yeniden başlıyor olabilir; bekleniyor…');yeniYazilimiBekle(eski)};
+    x.send(fd);
+  });
+}
+async function yeniYazilimiBekle(eski){
+  for(let i=0;i<45;i++){
+    await BEKLE(2000);
+    try{const d=await api('durum');D=d;if(d.derleme!=eski){msg('otaMesaj','Yeni yazılım çalışıyor ✓ ('+d.derleme+')',true);break}
+      if(i>5&&d.calisma_sn>20){msg('otaMesaj','Cihaz yeniden başlamadı; yazılım değişmedi ('+d.derleme+').',false);break}}catch(e){}
+    if(i==44)msg('otaMesaj','Cihaz 90 sn içinde geri gelmedi. Sayfayı yenile ya da BOOT tuşuyla ayar moduna gir.',false);
+  }
+  $('otaBtn').disabled=false;setTimeout(()=>$('otaCubukKap').className='ilerleme gizli',4000);ayarlar().catch(()=>{});
+}
+async function cik(){if(!confirm('Ayar modu kapanıp sensör normal ölçüm düzenine dönsün mü?'))return;await cagir('cik');msg('bakimMesaj','Uykuya dönüyor. Tekrar açmak için BOOT tuşuna bas.',true)}
+async function yenidenBaslat(){await cagir('yeniden_baslat');msg('bakimMesaj','Yeniden başlıyor… birkaç saniye sonra sayfayı yenile.',true)}
+async function fabrika(){if(!confirm('Tüm ayarlar (WiFi, MQTT, kalibrasyon) silinsin mi? Cihaz yazılımdaki varsayılanlarla açılır.'))return;await cagir('fabrika');msg('bakimMesaj','Ayarlar silindi, yeniden başlıyor.',true)}
+ayarlar().catch(e=>console.log(e));durum();setInterval(durum,3000);
+</script>
+</body>
+</html>

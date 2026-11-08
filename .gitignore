@@ -1,0 +1,12 @@
+# ESPHome
+firmware/.esphome/
+firmware/secrets.yaml
+
+# Panel
+panel/.env
+panel/veri/
+
+# Python / OS
+__pycache__/
+*.pyc
+.DS_Store
