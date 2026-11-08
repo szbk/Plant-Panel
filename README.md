@@ -6,6 +6,9 @@ The sensor wakes up on a schedule, measures soil moisture, sends it over MQTT in
 second, and goes back to deep sleep. A small Docker service stores the readings and shows each
 plant on a web page with its photo, history graphs and device status.
 
+For the full story behind the project, read the detailed article:
+[Building a battery-powered soil moisture sensor](https://bilketay.com/writing/battery-soil-moisture-sensor).
+
 <p align="center">
   <img src="docs/images/enclosure_explode.png" width="300" alt="3D-printed enclosure, exploded view">
   <img src="docs/images/enclosure_section.png" width="300" alt="Enclosure cross-section with the board, battery and sensor">
